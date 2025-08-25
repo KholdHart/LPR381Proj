@@ -1,120 +1,139 @@
-public interface ISolver
-{
-    Solution Solve(LPModel model);
-}
+using LinearProgrammingProject.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
-
-public class PrimalSimplexSolver : ISolver
+public class PrimalSimplexSolver
 {
-    public Solution Solve(LPModel model)
+    public void Solve(LinearProgrammingModel model)
     {
-        var solution = new Solution();
+        if (!model.IsValid())
+            throw new InvalidOperationException("Invalid Linear Programming Model.");
 
-        int numVariables = model.Coefficients.Count;
-        int numConstraints = model.Constraints.Count;
+        int numVariables = model.VariableCount;
+        int numConstraints = model.ConstraintCount;
 
-        double[] obj = model.Coefficients.Select(x => x.Sign == "+" ? x.Value : x.Value).ToArray(); //reading in the objective function coefficients 
-        double[] con = model.Constraints[0].Coefficients.Select(x => x.Sign == "+" ? x.Value : x.Value).ToArray();//reading in the constraint function coefficients
-        double RHS = model.Constraints[0].RightHandSide;//finding the right hand side
-        DisplayCanonicalForm(obj, con, RHS);
+        // Adjust for Minimize (convert to Max by multiplying by -1)
+        double senseFactor = model.ObjectiveType == ObjectiveType.Maximize ? 1.0 : -1.0;
 
-        double[,] tableau = new double[numConstraints + 1, numVariables + numConstraints + 1];
+        // Count slack columns (only for <= constraints)
+        int slackCount = model.Constraints.Count(c => c.Type == ConstraintType.LessThanOrEqual);
+        int cols = numVariables + slackCount + 1; // +1 for RHS
+        int rows = numConstraints + 1; // +1 for Z row
 
-        
+        double[,] tableau = new double[rows, cols];
+
+        // Build Z-row: Z - (c1)x1 - (c2)x2 ... = 0
         for (int j = 0; j < numVariables; j++)
-        {
-            tableau[0, j] = model.Coefficients[j].Value; 
-        }
+            tableau[0, j] = -senseFactor * model.ObjectiveCoefficients[j];
 
-        // Populate the constraints
+        // Fill constraints rows
+        int slackIndex = numVariables;
         for (int i = 0; i < numConstraints; i++)
         {
             var constraint = model.Constraints[i];
-           
-            for (int j = 0; j < constraint.Coefficients.Count; j++)
+
+            // Variable coefficients
+            for (int j = 0; j < numVariables; j++)
+                tableau[i + 1, j] = constraint.Coefficients[j];
+
+            // Slack variable if <=
+            if (constraint.Type == ConstraintType.LessThanOrEqual)
             {
-               
-                tableau[i + 1, j] = constraint.Coefficients[j].Value;
-               // Console.WriteLine(tableau[i + 1, j]);
+                tableau[i + 1, slackIndex++] = 1;
             }
-            tableau[i + 1, numVariables + i] = 1; // Add slack variable
-            tableau[i + 1, tableau.GetLength(1) - 1] = constraint.RightHandSide;
+            else
+            {
+                // No Big-M implemented for >= or = constraints
+                throw new InvalidOperationException("Only <= constraints are supported for now.");
+            }
+
+            // RHS
+            tableau[i + 1, cols - 1] = constraint.RightHandSide;
         }
 
-        // Main Loop
-        while (true)
-        {
-            
-            int pivotColumn = FindPivotColumn(tableau);
-            if (pivotColumn == -1) break; 
-
-            
-            int pivotRow = FindPivotRow(tableau, pivotColumn);
-            if (pivotRow == -1) throw new InvalidOperationException("Linear program is unbounded.");
-
-            
-            Pivot(tableau, pivotRow, pivotColumn);
-        }
-
-        // Extract solution
-        ExtractSolution(tableau, numVariables, numConstraints, solution);
-
-        return solution;
-    }
-
-    static void DisplayCanonicalForm(double[] objValue, double[] conValue, double rhs)
-    {
-        Console.WriteLine("Canonical Form of the Linear Program:");
-        Console.Write("Objective Function: Maximize Z = ");
-        for (int i = 0; i < objValue.Length; i++)
-        {
-            if (i > 0 && objValue[i] >= 0)
-                Console.Write(" + ");
-            Console.Write($"{objValue[i]} x{i + 1}");
-        }
+        // Display canonical form
+        Console.WriteLine("=== Canonical Form ===");
+        Console.WriteLine(model.GetObjectiveFunctionString());
+        foreach (var line in model.GetConstraintStrings())
+            Console.WriteLine(line);
         Console.WriteLine();
 
-        Console.WriteLine("Subject to:");
-        Console.Write("   ");
-        for (int i = 0; i < conValue.Length; i++)
+        int iteration = 0;
+        PrintTableau(tableau, iteration);
+
+        // Main simplex loop
+        while (true)
         {
-            if (i > 0 && conValue[i] >= 0)
-                Console.Write(" + ");
-            Console.Write($"{conValue[i]} x{i + 1}");
+            int pivotColumn = FindPivotColumn(tableau);
+            if (pivotColumn == -1)
+            {
+                // Optimal solution found
+                model.Status = SolutionStatus.Optimal;
+                break;
+            }
+
+            int pivotRow = FindPivotRow(tableau, pivotColumn);
+            if (pivotRow == -1)
+            {
+                model.Status = SolutionStatus.Unbounded;
+                return;
+            }
+
+            Pivot(tableau, pivotRow, pivotColumn);
+            PrintTableau(tableau, ++iteration);
         }
-        Console.WriteLine($" <= {rhs}");
-        Console.WriteLine("============================================================");
+
+        // Extract solution and update model
+        ExtractSolution(model, tableau, numVariables, numConstraints);
+    }
+
+    private void PrintTableau(double[,] tableau, int iteration)
+    {
+        Console.WriteLine($"=== Iteration {iteration} ===");
+        for (int i = 0; i < tableau.GetLength(0); i++)
+        {
+            for (int j = 0; j < tableau.GetLength(1); j++)
+            {
+                Console.Write($"{Math.Round(tableau[i, j], 3),8}");
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine("----------------------------");
     }
 
     private int FindPivotColumn(double[,] tableau)
     {
-        int numCols = tableau.GetLength(1);
-        int pivotColumn = -1;
+        int cols = tableau.GetLength(1) - 1; // exclude RHS
+        int pivotCol = -1;
         double maxValue = 0;
 
-        for (int j = 0; j < numCols - 1; j++)
+        for (int j = 0; j < cols; j++)
         {
             if (tableau[0, j] > maxValue)
             {
                 maxValue = tableau[0, j];
-                pivotColumn = j;
+                pivotCol = j;
             }
         }
-
-        return pivotColumn;
+        return pivotCol;
     }
 
     private int FindPivotRow(double[,] tableau, int pivotColumn)
     {
-        int numRows = tableau.GetLength(0);
+        int rows = tableau.GetLength(0);
+        int rhsCol = tableau.GetLength(1) - 1;
+
         int pivotRow = -1;
         double minRatio = double.MaxValue;
 
-        for (int i = 1; i < numRows; i++)
+        for (int i = 1; i < rows; i++)
         {
-            if (tableau[i, pivotColumn] > 0)
+            double colValue = tableau[i, pivotColumn];
+            if (colValue > 0)
             {
-                double ratio = tableau[i, tableau.GetLength(1) - 1] / tableau[i, pivotColumn];
+                double ratio = tableau[i, rhsCol] / colValue;
                 if (ratio < minRatio)
                 {
                     minRatio = ratio;
@@ -122,64 +141,60 @@ public class PrimalSimplexSolver : ISolver
                 }
             }
         }
-
         return pivotRow;
     }
 
     private void Pivot(double[,] tableau, int pivotRow, int pivotColumn)
     {
-        int numRows = tableau.GetLength(0);
-        int numCols = tableau.GetLength(1);
+        int rows = tableau.GetLength(0);
+        int cols = tableau.GetLength(1);
 
         double pivotValue = tableau[pivotRow, pivotColumn];
 
         // Normalize pivot row
-        for (int j = 0; j < numCols; j++)
-        {
+        for (int j = 0; j < cols; j++)
             tableau[pivotRow, j] /= pivotValue;
-        }
 
-        // Zero out pivot column
-        for (int i = 0; i < numRows; i++)
+        // Zero out other rows in pivot column
+        for (int i = 0; i < rows; i++)
         {
             if (i == pivotRow) continue;
             double factor = tableau[i, pivotColumn];
-            for (int j = 0; j < numCols; j++)
+            for (int j = 0; j < cols; j++)
             {
                 tableau[i, j] -= factor * tableau[pivotRow, j];
             }
         }
     }
 
-    private void ExtractSolution(double[,] tableau, int numVariables, int numConstraints, Solution solution)
+    private void ExtractSolution(LinearProgrammingModel model, double[,] tableau, int numVariables, int numConstraints)
     {
-        // Extract the optimal values from the tableau
-        for (int i = 0; i < numVariables; i++)
+        int rhsCol = tableau.GetLength(1) - 1;
+        model.OptimalSolution.Clear();
+
+        // Assign values to decision variables
+        for (int j = 0; j < numVariables; j++)
         {
-            double value = 0;
-            for (int j = 0; j < numConstraints; j++)
+            int rowWithOne = -1;
+            bool isUnitColumn = true;
+
+            for (int i = 1; i <= numConstraints; i++)
             {
-                if (tableau[j + 1, i] != 0)
+                if (Math.Abs(tableau[i, j] - 1) < 1e-9)
                 {
-                    value = tableau[j + 1, tableau.GetLength(1) - 1];
+                    if (rowWithOne == -1) rowWithOne = i;
+                    else { isUnitColumn = false; break; }
+                }
+                else if (Math.Abs(tableau[i, j]) > 1e-9)
+                {
+                    isUnitColumn = false; break;
                 }
             }
-            solution.OptimalValues.Add(value);
+
+            double value = (isUnitColumn && rowWithOne != -1) ? tableau[rowWithOne, rhsCol] : 0;
+            model.OptimalSolution[model.Variables[j].Name] = value;
         }
 
-        // Extract the objective value
-        solution.ObjectiveValue = tableau[0, tableau.GetLength(1) - 1];
-    }
-}
-
-
-public class RevPrimalSimplexSolver : ISolver
-{
-    public Solution Solve(LPModel model)
-    {
-        // Implement your algorithm here
-        var solution = new Solution();
-        // Make Simplex iterations and fill the solution object
-        return solution;
+        model.OptimalValue = tableau[0, rhsCol];
     }
 }
