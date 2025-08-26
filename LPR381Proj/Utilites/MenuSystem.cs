@@ -56,9 +56,17 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("5. Branch & Bound Knapsack");
             int alg = GetChoice(1, 5);
             // Placeholder: Simulate solution
-            _model.Status = SolutionStatus.Optimal;
+            /*_model.Status = SolutionStatus.Optimal;
             _model.OptimalValue = 123.456;
-            foreach (var v in _model.Variables) v.Value = 1.0;
+            foreach (var v in _model.Variables) v.Value = 1.0;*/
+            Console.WriteLine("Solving...");
+            System.Threading.Thread.Sleep(1000); // Simulate time delay
+            var solver = new PrimalSimplexSolver();
+            var result = solver.Solve(_model); // Example call to solver
+            foreach (var snapshot in result.IterationSnapshots)
+            {
+                Console.WriteLine(snapshot);
+            }
             _outputWriter = new OutputWriter("output.txt");
             _outputWriter.WriteSolution(_model, $"Algorithm {alg}", 5);
             _outputWriter.SaveToFile();
