@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using LinearProgrammingProject.Models;
 using LinearProgrammingProject.IO;
 using LinearProgrammingProject.Utilities;
+using LinearProgrammingProject.Algorithms;
+using LinearProgrammingProject.Solver;
 
 namespace LinearProgrammingProject.Utilities
 {
@@ -55,23 +58,108 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("4. Cutting Plane");
             Console.WriteLine("5. Branch & Bound Knapsack");
             int alg = GetChoice(1, 5);
-            // Placeholder: Simulate solution
-            /*_model.Status = SolutionStatus.Optimal;
-            _model.OptimalValue = 123.456;
-            foreach (var v in _model.Variables) v.Value = 1.0;*/
+            
             Console.WriteLine("Solving...");
-            System.Threading.Thread.Sleep(1000); // Simulate time delay
-            var solver = new PrimalSimplexSolver();
-            var result = solver.Solve(_model); // Example call to solver
-            foreach (var snapshot in result.IterationSnapshots)
+            
+            try
             {
-                Console.WriteLine(snapshot);
+                if (alg == 1)
+                {
+                    // Primal Simplex
+                    var solver = new PrimalSimplexSolver();
+                    var result = solver.Solve(_model);
+                    
+                    Console.WriteLine("\n=== PRIMAL SIMPLEX SOLUTION ===");
+                    foreach (var snapshot in result.IterationSnapshots)
+                    {
+                        Console.WriteLine(snapshot);
+                    }
+                    
+                    if (result.Pivots.Count > 0)
+                    {
+                        Console.WriteLine("\nPivot Operations:");
+                        foreach (var pivot in result.Pivots)
+                        {
+                            Console.WriteLine($"  {pivot}");
+                        }
+                    }
+                }
+                else if (alg == 3)
+                {
+                    // Branch & Bound Simplex
+                    if (!_model.IsIntegerProgram())
+                    {
+                        Console.WriteLine("Error: Branch & Bound requires integer or binary variables!");
+                        Wait();
+                        return;
+                    }
+                    
+                    var bnbSolver = new BranchAndBoundSimplex();
+                    var bnbResult = bnbSolver.Solve(_model);
+                    
+                    // Display canonical form
+                    Console.WriteLine(bnbResult.CanonicalForm);
+                    
+                    // Display all iteration logs
+                    foreach (var log in bnbResult.IterationLogs)
+                    {
+                        Console.WriteLine(log);
+                    }
+                    
+                    // Display branch and bound tree
+                    bnbSolver.DisplayBranchAndBoundTree(bnbResult);
+                    
+                    Console.WriteLine("\nWould you like to see all simplex table iterations? (y/n)");
+                    if (Console.ReadLine()?.ToLower() == "y")
+                    {
+                        bnbSolver.DisplayAllTableIterations(bnbResult);
+                    }
+                    
+                    // Update model with best solution
+                    if (bnbResult.BestIntegerSolution != null)
+                    {
+                        _model.OptimalValue = bnbResult.BestIntegerValue;
+                        _model.OptimalSolution = new Dictionary<string, double>(bnbResult.BestIntegerSolution.Solution);
+                        _model.Status = SolutionStatus.Optimal;
+                    }
+                    else
+                    {
+                        _model.Status = SolutionStatus.Infeasible;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Algorithm {alg} not yet implemented.");
+                    Wait();
+                    return;
+                }
+                
+                // Write output
+                _outputWriter = new OutputWriter("output.txt");
+                _outputWriter.WriteSolution(_model, GetAlgorithmName(alg), 5);
+                _outputWriter.SaveToFile();
+                Console.WriteLine("\nSolved. Output written to output.txt");
             }
-            _outputWriter = new OutputWriter("output.txt");
-            _outputWriter.WriteSolution(_model, $"Algorithm {alg}", 5);
-            _outputWriter.SaveToFile();
-            Console.WriteLine("Solved. Output written to output.txt");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error solving model: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+            
             Wait();
+        }
+        
+        private string GetAlgorithmName(int algorithmNumber)
+        {
+            switch (algorithmNumber)
+            {
+                case 1: return "Primal Simplex";
+                case 2: return "Revised Primal Simplex";
+                case 3: return "Branch & Bound Simplex";
+                case 4: return "Cutting Plane";
+                case 5: return "Branch & Bound Knapsack";
+                default: return $"Algorithm {algorithmNumber}";
+            }
         }
 
         private void SensitivityAnalysis()
