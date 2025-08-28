@@ -12,7 +12,6 @@ namespace LinearProgrammingProject.Utilities
     public class MenuSystem
     {
         private LinearProgrammingModel _model;
-        private OutputWriter _outputWriter;
         private const int MENU_WIDTH = 80;
 
         public void Run()
@@ -34,10 +33,10 @@ namespace LinearProgrammingProject.Utilities
                         SolveModel();
                         break;
                     case 3:
-                        ViewOutputFile();
+                        SensitivityAnalysis();
                         break;
                     case 4:
-                        SensitivityAnalysis();
+                        ViewOutputFile();
                         break;
                     case 5:
                         ShowExitMessage();
@@ -114,10 +113,10 @@ namespace LinearProgrammingProject.Utilities
             else
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ STATUS: Model loaded successfully                                                                                   │");
-                Console.WriteLine($" │ VARIABLES: {_model.Variables.Count,-3} │ CONSTRAINTS: {_model.Constraints.Count,-3} │ TYPE: {GetModelType(),-15}    │");
-                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                Console.WriteLine("  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($" │ STATUS: Model loaded successfully                                                                         │");
+                Console.WriteLine($" │ VARIABLES:{_model.Variables.Count,-3}│CONSTRAINTS:{_model.Constraints.Count,-3}│TYPE: {GetModelType(),-15}│");
+                Console.WriteLine("  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
             }
             Console.ResetColor();
         }
@@ -180,9 +179,9 @@ namespace LinearProgrammingProject.Utilities
                 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  SUCCESS!");
-                Console.WriteLine("     ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($"    │ Model loaded successfully from: {path,-43}                                                                                │");
-                Console.WriteLine("     └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                Console.WriteLine("     ┌───────────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($"    │ Model loaded successfully from: {path,-43}                                        │");
+                Console.WriteLine("     └───────────────────────────────────────────────────────────────────────────────────┘");
                 Console.ResetColor();
             }
             catch (Exception ex)
@@ -258,10 +257,8 @@ namespace LinearProgrammingProject.Utilities
                         Console.WriteLine("The problem is unbounded.");
                     }
                     
-                    // Save Primal Simplex results to output file
-                    _outputWriter = new OutputWriter("output.txt");
-                    _outputWriter.WriteSolution(_model, GetAlgorithmName(alg), result.IterationSnapshots.Count);
-                    _outputWriter.SaveToFile();
+                    // Save Primal Simplex results to output file with canonical form and all iterations
+                    WritePrimalSimplexOutput(result, "output.txt");
                 }
                 else if (alg == 3)
                 {
@@ -306,10 +303,8 @@ namespace LinearProgrammingProject.Utilities
                         _model.Status = SolutionStatus.Infeasible;
                     }
                     
-                    // Save Branch & Bound results to output file
-                    _outputWriter = new OutputWriter("output.txt");
-                    _outputWriter.WriteSolution(_model, GetAlgorithmName(alg), bnbResult.IterationLogs.Count);
-                    _outputWriter.SaveToFile();
+                    // Save Branch & Bound results to output file with canonical form and all iterations
+                    WriteBranchAndBoundOutput(bnbResult, "output.txt");
                 }
                 else if (alg == 5)
                 {
@@ -384,13 +379,6 @@ namespace LinearProgrammingProject.Utilities
                     
                     // Write knapsack-specific output
                     WriteKnapsackOutput(knapsackResult, "output.txt");
-                    Console.WriteLine("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                    Console.WriteLine("  ║                      SOLUTION COMPLETE & SAVED                                ║");
-                    Console.WriteLine("  ║                                                                               ║");
-                    Console.WriteLine("  ║    Complete results written to: output.txt                                    ║");
-                    Console.WriteLine("  ║    Includes: Canonical form, all iterations, optimal solution                 ║");
-                    Console.WriteLine("  ╚═══════════════════════════════════════════════════════════════════════════════╝");
-                    return; // Exit early for knapsack to avoid duplicate output writing
                 }
                 else
                 {
@@ -399,18 +387,15 @@ namespace LinearProgrammingProject.Utilities
                     return;
                 }
                 
-                // Show completion message for non-knapsack algorithms
-                if (alg != 5)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("\n  OPTIMIZATION COMPLETE");
-                    Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-                    Console.WriteLine($" │ Algorithm: {GetAlgorithmName(alg),-25}                                      │");
-                    Console.WriteLine($" │ Status: {_model.Status,-15}                                                 │");
-                    Console.WriteLine("  │ Output: Detailed results saved to output.txt                                │");
-                    Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
-                    Console.ResetColor();
-                }
+                // Show completion message for all algorithms
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("\n  OPTIMIZATION COMPLETE");
+                Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($" │ Algorithm: {GetAlgorithmName(alg),-25}                                      │");
+                Console.WriteLine($" │ Status: {_model.Status,-15}                                                 │");
+                Console.WriteLine("  │ Output: Detailed results saved to output.txt                                │");
+                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
@@ -578,132 +563,189 @@ namespace LinearProgrammingProject.Utilities
                     writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     writer.WriteLine();
                     
+                    // Write canonical form
+                    writer.WriteLine("CANONICAL FORM");
+                    writer.WriteLine(new string('=', 60));
+                    // Extract canonical form from iteration logs
+                    foreach (var log in result.IterationLogs)
+                    {
+                        if (log.Contains("CANONICAL FORM") || log.Contains("Maximize") || log.Contains("Subject to"))
+                        {
+                            writer.WriteLine(log);
+                            break;
+                        }
+                    }
+                    writer.WriteLine();
+                    
+                    // Write all tableau iterations
+                    writer.WriteLine("TABLEAU ITERATIONS");
+                    writer.WriteLine(new string('=', 60));
                     // Write all iteration logs which include canonical form and table iterations
                     foreach (var log in result.IterationLogs)
                     {
                         writer.WriteLine(log);
                     }
+                    writer.WriteLine();
                     
-                    writer.WriteLine("\n" + new string('=', 60));
-                    writer.WriteLine("DETAILED NODE ANALYSIS");
+                    // Write final solution
+                    writer.WriteLine("FINAL SOLUTION");
                     writer.WriteLine(new string('=', 60));
-                    
-                    // Write detailed node information
-                    foreach (var node in result.AllNodes)
-                    {
-                        writer.WriteLine($"\n--- NODE {node.Id} DETAILED TABLE ---");
-                        if (node.ParentId > 0)
-                        {
-                            writer.WriteLine($"Parent: Node {node.ParentId}");
-                            writer.WriteLine($"Branch Decision: {node.BranchDecision}");
-                        }
-                        
-                        // Write the table iterations for this node
-                        foreach (var table in node.TableIterations)
-                        {
-                            writer.WriteLine(table);
-                        }
-                        
-                        if (node.IsFathomed)
-                        {
-                            writer.WriteLine($"FATHOMED: {node.FathomReason}");
-                        }
-                        
-                        writer.WriteLine(new string('-', 40));
-                    }
-                    
-                    // Write final summary
-                    writer.WriteLine("\n" + new string('=', 60));
-                    writer.WriteLine("BRANCH & BOUND TREE SUMMARY");
-                    writer.WriteLine(new string('=', 60));
-                    
-                    var nodesByLevel = result.AllNodes.GroupBy(n => n.Level).OrderBy(g => g.Key);
-                    
-                    foreach (var levelGroup in nodesByLevel)
-                    {
-                        writer.WriteLine($"\nDepth {levelGroup.Key}:");
-                        foreach (var node in levelGroup.OrderBy(n => n.Id))
-                        {
-                            string status = node.IsFathomed ? $"FATHOMED ({node.FathomReason})" : "ACTIVE";
-                            string branchInfo = node.ParentId > 0 ? $" [{node.BranchDecision}]" : "";
-                            
-                            writer.WriteLine($"  Node {node.Id}{branchInfo} - {status}");
-                            writer.WriteLine($"    Value: {node.CurrentValue:F3}, Weight: {node.CurrentWeight:F3}, Upper Bound: {node.UpperBound:F3}");
-                            
-                            if (node.IncludedItems.Count > 0)
-                            {
-                                var includedNames = node.IncludedItems.Select(i => result.Items[i].Name);
-                                writer.WriteLine($"    Included: [{string.Join(", ", includedNames)}]");
-                            }
-                        }
-                    }
-                    
-                    writer.WriteLine($"\nTotal Statistics:");
-                    writer.WriteLine($"Total nodes created: {result.TotalNodes}");
-                    writer.WriteLine($"Nodes explored: {result.NodesExplored}");
-                    writer.WriteLine($"Nodes fathomed: {result.NodesFathomed}");
-                    
-                    // Enhanced solution summary
-                    writer.WriteLine("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                    writer.WriteLine("  ║                            FINAL SOLUTION SUMMARY                             ║");
-                    writer.WriteLine("  ╚═══════════════════════════════════════════════════════════════════════════════╝");
+                    writer.WriteLine($"Algorithm: Branch & Bound Knapsack");
+                    writer.WriteLine($"Total Iterations: {result.IterationLogs.Count}");
+                    writer.WriteLine($"Status: {(_model.Status == SolutionStatus.Optimal ? "Optimal" : _model.Status.ToString())}");
                     
                     if (result.BestSolution != null)
                     {
-                        writer.WriteLine($"\nOPTIMAL SOLUTION FOUND:");
-                        writer.WriteLine($"┌───────────────────────────────────────────────────────────────────────────────────────────┐");
-                        writer.WriteLine($"│ Algorithm: Branch & Bound Knapsack                                                        │");
-                        writer.WriteLine($"│ Status: OPTIMAL                                                                           │");
-                        writer.WriteLine($"│ Optimal Value: {result.BestValue,7:F3}                                                    │");
-                        writer.WriteLine($"│ Total Weight: {result.BestSolution.CurrentWeight,8:F3}                                    │");
-                        writer.WriteLine($"│ Capacity Used: {(result.BestSolution.CurrentWeight / result.Capacity * 100),6:F1}%        │");
-                        writer.WriteLine($"│ Items Selected: {result.BestSolution.IncludedItems.Count,2} out of {result.Items.Count}   │");
-                        writer.WriteLine($"└───────────────────────────────────────────────────────────────────────────────────────────┘");
+                        writer.WriteLine($"Optimal Value: {result.BestValue:F3}");
+                        writer.WriteLine("Variable Values:");
                         
-                        writer.WriteLine($"\nVARIABLE ASSIGNMENTS:");
-                        writer.WriteLine($"         ┌───────────────┬───────────────┬───────────────────┬───────────────────┬─────────────────────────────────────┐");
-                        writer.WriteLine($"         │Variable       │ Value         │ Item              │ Weight            │ Contribution                        │");
-                        writer.WriteLine($"         │               │               │ Value             │                   │                                     │");
-                        writer.WriteLine($"         ├───────────────┼───────────────┼───────────────────┼───────────────────┼─────────────────────────────────────┤");
-                        
+                        // Write variable assignments in the same format as other algorithms
                         for (int i = 0; i < result.Items.Count; i++)
                         {
                             var item = result.Items[i];
                             int value = result.BestSolution.IncludedItems.Contains(i) ? 1 : 0;
-                            string contribution = value == 1 ? $"Value: {item.Value:F3}, Weight: {item.Weight:F3}" : "Not selected";
-                            writer.WriteLine($"     │ {item.Name,-7}│ {value}       │ {item.Value,7:F3} │ {item.Weight,7:F3} │ {contribution,-35} │");
+                            writer.WriteLine($"  {item.Name} = {value:F3}");
                         }
-                        
-                        writer.WriteLine($"         └───────────────┴───────────────┴───────────────────┴────────────────────┴────────────────────────────────────┘");
-                        
-                        writer.WriteLine($"\nSOLUTION VERIFICATION:");
-                        writer.WriteLine($"┌─ Total Value: {result.BestValue:F3}");
-                        writer.WriteLine($"├─ Total Weight: {result.BestSolution.CurrentWeight:F3}");
-                        writer.WriteLine($"├─ Capacity Limit: {result.Capacity:F3}");
-                        writer.WriteLine($"├─ Remaining Capacity: {(result.Capacity - result.BestSolution.CurrentWeight):F3}");
-                        writer.WriteLine($"└─ Feasible: {(result.BestSolution.CurrentWeight <= result.Capacity ? "YES" : "NO")}");
-                        
-                        writer.WriteLine($"\nEFFICIENCY METRICS:");
-                        writer.WriteLine($"┌─ Nodes Created: {result.TotalNodes}");
-                        writer.WriteLine($"├─ Nodes Explored: {result.NodesExplored}");
-                        writer.WriteLine($"├─ Nodes Fathomed: {result.NodesFathomed}");
-                        writer.WriteLine($"├─ Pruning Efficiency: {(double)result.NodesFathomed / result.TotalNodes * 100:F1}%");
-                        writer.WriteLine($"└─ Search Space Reduction: {(1 - (double)result.TotalNodes / Math.Pow(2, result.Items.Count)) * 100:F1}%");
                     }
                     else
                     {
-                        writer.WriteLine($"\nNO FEASIBLE SOLUTION FOUND");
-                        writer.WriteLine($"┌─────────────────────────────────────────────────────────────────────────────┐");
-                        writer.WriteLine($"│ Algorithm: Branch & Bound Knapsack                                          │");
-                        writer.WriteLine($"│ Status: INFEASIBLE                                                          │");
-                        writer.WriteLine($"│ Reason: No combination of items fits within the knapsack capacity           │");
-                        writer.WriteLine($"└─────────────────────────────────────────────────────────────────────────────┘");
+                        writer.WriteLine("No feasible solution found.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error writing output: {ex.Message}");
+                Console.WriteLine($"Error writing Knapsack output: {ex.Message}");
+            }
+        }
+
+        private void WritePrimalSimplexOutput(PrimalSimplexSolver.SimplexReport result, string outputPath)
+        {
+            try
+            {
+                using (var writer = new System.IO.StreamWriter(outputPath))
+                {
+                    writer.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
+                    writer.WriteLine("║                        PRIMAL SIMPLEX ALGORITHM REPORT                        ║");
+                    writer.WriteLine("║                     All decimal values rounded to 3 points                    ║");
+                    writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
+                    writer.WriteLine();
+                    
+                    // Write canonical form
+                    writer.WriteLine("CANONICAL FORM");
+                    writer.WriteLine(new string('=', 60));
+                    writer.WriteLine(result.CanonicalForm);
+                    writer.WriteLine();
+                    
+                    // Write all tableau iterations
+                    writer.WriteLine("TABLEAU ITERATIONS");
+                    writer.WriteLine(new string('=', 60));
+                    foreach (var snapshot in result.IterationSnapshots)
+                    {
+                        writer.WriteLine(snapshot);
+                        writer.WriteLine();
+                    }
+                    
+                    // Write pivot operations summary
+                    if (result.Pivots.Count > 0)
+                    {
+                        writer.WriteLine("PIVOT OPERATIONS SUMMARY");
+                        writer.WriteLine(new string('=', 60));
+                        foreach (var pivot in result.Pivots)
+                        {
+                            writer.WriteLine($"  {pivot}");
+                        }
+                        writer.WriteLine();
+                    }
+                    
+                    // Write final solution
+                    writer.WriteLine("FINAL SOLUTION");
+                    writer.WriteLine(new string('=', 60));
+                    writer.WriteLine($"Algorithm: Primal Simplex");
+                    writer.WriteLine($"Iterations: {result.IterationSnapshots.Count}");
+                    writer.WriteLine($"Status: {_model.Status}");
+                    
+                    if (_model.Status == SolutionStatus.Optimal)
+                    {
+                        writer.WriteLine($"Optimal Value: {_model.OptimalValue:F3}");
+                        writer.WriteLine("Variable Values:");
+                        foreach (var kvp in _model.OptimalSolution)
+                        {
+                            writer.WriteLine($"  {kvp.Key} = {kvp.Value:F3}");
+                        }
+                    }
+                    else if (_model.Status == SolutionStatus.Unbounded)
+                    {
+                        writer.WriteLine("The problem is unbounded.");
+                    }
+                    else if (_model.Status == SolutionStatus.Infeasible)
+                    {
+                        writer.WriteLine("The problem is infeasible.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error writing Primal Simplex output: {ex.Message}");
+            }
+        }
+
+        private void WriteBranchAndBoundOutput(BranchAndBoundSimplex.BranchAndBoundReport result, string outputPath)
+        {
+            try
+            {
+                using (var writer = new System.IO.StreamWriter(outputPath))
+                {
+                    writer.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
+                    writer.WriteLine("║                    BRANCH & BOUND SIMPLEX ALGORITHM REPORT                    ║");
+                    writer.WriteLine("║                     All decimal values rounded to 3 points                    ║");
+                    writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
+                    writer.WriteLine();
+                    
+                    // Write canonical form
+                    writer.WriteLine("CANONICAL FORM");
+                    writer.WriteLine(new string('=', 60));
+                    writer.WriteLine(result.CanonicalForm);
+                    writer.WriteLine();
+                    
+                    // Write all iteration logs (includes all tableau iterations)
+                    writer.WriteLine("BRANCH & BOUND ITERATIONS");
+                    writer.WriteLine(new string('=', 60));
+                    foreach (var log in result.IterationLogs)
+                    {
+                        writer.WriteLine(log);
+                        writer.WriteLine();
+                    }
+                    
+                    // Write final solution
+                    writer.WriteLine("FINAL SOLUTION");
+                    writer.WriteLine(new string('=', 60));
+                    writer.WriteLine($"Algorithm: Branch & Bound Simplex");
+                    writer.WriteLine($"Total Iterations: {result.IterationLogs.Count}");
+                    writer.WriteLine($"Status: {_model.Status}");
+                    
+                    if (_model.Status == SolutionStatus.Optimal && result.BestIntegerSolution != null)
+                    {
+                        writer.WriteLine($"Optimal Value: {result.BestIntegerValue:F3}");
+                        writer.WriteLine("Variable Values:");
+                        foreach (var kvp in result.BestIntegerSolution.Solution)
+                        {
+                            writer.WriteLine($"  {kvp.Key} = {kvp.Value:F3}");
+                        }
+                    }
+                    else if (_model.Status == SolutionStatus.Infeasible)
+                    {
+                        writer.WriteLine("No feasible integer solution found.");
+                    }
+                    else if (_model.Status == SolutionStatus.Unbounded)
+                    {
+                        writer.WriteLine("The problem is unbounded.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error writing Branch & Bound output: {ex.Message}");
             }
         }
 
@@ -717,41 +759,41 @@ namespace LinearProgrammingProject.Utilities
             // Show algorithm compatibility
             string modelType = GetModelType();
             
-            Console.WriteLine($"     │  Current Model Type: {modelType,-25}                                       │");
-            Console.WriteLine("      │                                                                            │");
-            Console.WriteLine("      │   1.  Primal Simplex                                                       │");
-            Console.WriteLine("      │   2.  Revised Primal Simplex                                               │");
+            Console.WriteLine($"    │  Current Model Type: {modelType,-25}                                        │");
+            Console.WriteLine("     │                                                                             │");
+            Console.WriteLine("     │   1.  Primal Simplex                                                        │");
+            Console.WriteLine("     │   2.  Revised Primal Simplex                                                │");
             
             if (_model.IsIntegerProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  │   3. Branch & Bound Simplex                                                │");
+                Console.WriteLine(" │   3. Branch & Bound Simplex                                                 │");
                 Console.ResetColor();
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("  │  3. Branch & Bound Simplex                                                 │");
+                Console.WriteLine(" │  3. Branch & Bound Simplex                                                  │");
                 Console.ResetColor();
             }
             
-                Console.WriteLine("  │  4. Cutting Plane                                                          │");
+                Console.WriteLine(" │  4. Cutting Plane                                                           │");
             
             if (_model.IsBinaryProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  │  5. Branch & Bound Knapsack                                                │");
+                Console.WriteLine(" │  5. Branch & Bound Knapsack                                                 │");
                 Console.ResetColor();
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("  │  5. Branch & Bound Knapsack                                                │");
+                Console.WriteLine(" │  5. Branch & Bound Knapsack                                                 │");
                 Console.ResetColor();
             }
             
-            Console.WriteLine("      │                                                                             │");
-            Console.WriteLine("      └─────────────────────────────────────────────────────────────────────────────┘");
+            Console.WriteLine("     │                                                                             │");
+            Console.WriteLine("     └─────────────────────────────────────────────────────────────────────────────┘");
             
             Console.WriteLine("\n  Select algorithm (1-5): ");
         }
@@ -760,9 +802,9 @@ namespace LinearProgrammingProject.Utilities
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\n  ERROR");
-            Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-            Console.WriteLine($" │ {message,-75} │");
-            Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+            Console.WriteLine("  ┌────────────────────────────────────────────────────────────────┐");
+            Console.WriteLine($" │ {message,-75}                                                  │");
+            Console.WriteLine("  └────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
         }
 
