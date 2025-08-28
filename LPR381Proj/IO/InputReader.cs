@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Globalization;
+using System.Linq;
 using LinearProgrammingProject.Models;
 
 namespace LinearProgrammingProject.IO
@@ -22,19 +23,23 @@ namespace LinearProgrammingProject.IO
             }
         }
 
+
+
         public LinearProgrammingModel ReadModel()
         {
-            // Better error handling for file existence
             if (!File.Exists(_filePath))
             {
-                // Show both the original path and the resolved path for debugging
                 string originalPath = Path.GetFileName(_filePath);
                 throw new FileNotFoundException($"File not found: {originalPath}\nSearched at: {_filePath}\nCurrent directory: {Directory.GetCurrentDirectory()}");
             }
 
             string[] lines = File.ReadAllLines(_filePath);
+            
+            // Remove empty lines and trim whitespace
+            lines = lines.Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).ToArray();
+            
             if (lines.Length < 3)
-                throw new Exception($"File must have at least 3 lines. Found {lines.Length} lines.");
+                throw new Exception($"File must have at least 3 lines (objective function, at least one constraint, variable types). Found {lines.Length} non-empty lines.");
 
             var model = new LinearProgrammingModel();
             try
@@ -54,6 +59,8 @@ namespace LinearProgrammingProject.IO
             }
         }
 
+
+
         private void ParseObjectiveFunction(string line, LinearProgrammingModel model)
         {
             try
@@ -63,37 +70,42 @@ namespace LinearProgrammingProject.IO
                 if (tokens.Length < 2)
                     throw new Exception("Objective function line must have at least 2 tokens (objective type and coefficients).");
 
-                model.ObjectiveType = tokens[0].ToLower() == "max" ? ObjectiveType.Maximize : ObjectiveType.Minimize;
+                // Parse objective type (max or min)
+                string objTypeStr = tokens[0].ToLower();
+                if (objTypeStr != "max" && objTypeStr != "min")
+                    throw new Exception($"Invalid objective type '{tokens[0]}'. Use 'max' or 'min'.");
+                
+                model.ObjectiveType = objTypeStr == "max" ? ObjectiveType.Maximize : ObjectiveType.Minimize;
 
-                // Parse coefficients with their signs
+                // Parse coefficients with their explicit signs (+ or -)
                 for (int i = 1; i < tokens.Length; i++)
                 {
                     double coeff;
                     string token = tokens[i];
 
-                    // Handle different formats: "+30", "-30", "30"
+                    // According to specification, each coefficient must have an explicit operator (+ or -)
                     if (token.StartsWith("+"))
                     {
-                        if (!double.TryParse(token.Substring(1), out coeff))
+                        string numberPart = token.Substring(1);
+                        if (!double.TryParse(numberPart, NumberStyles.Float, CultureInfo.InvariantCulture, out coeff))
                             throw new Exception($"Invalid coefficient '{token}' in objective function.");
                     }
                     else if (token.StartsWith("-"))
                     {
-                        if (!double.TryParse(token.Substring(1), out coeff))
+                        string numberPart = token.Substring(1);
+                        if (!double.TryParse(numberPart, NumberStyles.Float, CultureInfo.InvariantCulture, out coeff))
                             throw new Exception($"Invalid coefficient '{token}' in objective function.");
                         coeff = -coeff;
                     }
                     else
                     {
-                        if (!double.TryParse(token, out coeff))
-                            throw new Exception($"Invalid coefficient '{token}' in objective function.");
+                        // According to specification, coefficients should have explicit signs
+                        throw new Exception($"Coefficient '{token}' in objective function must have explicit sign (+ or -). Use '+{token}' or '-{token}'.");
                     }
 
                     model.ObjectiveCoefficients.Add(coeff);
                     model.Variables.Add(new Variable($"x{i}", VariableType.Continuous));
                 }
-
-                Console.WriteLine($"Created {model.VariableCount} variables from objective function");
             }
             catch (Exception ex)
             {
@@ -107,16 +119,18 @@ namespace LinearProgrammingProject.IO
             {
                 for (int i = 1; i < lines.Length - 1; i++)
                 {
-                    var tokens = lines[i].Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    Console.WriteLine($"Parsing constraint line {i + 1}: '{lines[i]}'");
-                    Console.WriteLine($"Tokens found: [{string.Join(", ", tokens)}] (count: {tokens.Length})");
-                    Console.WriteLine($"Expected: {model.VariableCount} coefficients + constraint type + RHS = {model.VariableCount + 2} tokens");
+                    string line = lines[i].Trim();
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+                        
+                    var tokens = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                     if (tokens.Length < model.VariableCount + 2)
                         throw new Exception($"Constraint line {i + 1} has insufficient tokens. Expected at least {model.VariableCount + 2}, found {tokens.Length}.");
 
                     var coeffs = new List<double>();
+                    
+                    // Parse technological coefficients for each variable
                     for (int j = 0; j < model.VariableCount; j++)
                     {
                         if (j >= tokens.Length)
@@ -125,34 +139,30 @@ namespace LinearProgrammingProject.IO
                         double coeff;
                         string token = tokens[j];
 
-                        // Handle different formats: "+8", "-8", "8", "+1.5", "-1.5"
-                        // Use invariant culture to ensure decimal parsing works correctly
+                        // Handle technological coefficients with explicit operators (+ or -)
                         if (token.StartsWith("+"))
                         {
                             string numberPart = token.Substring(1);
-                            Console.WriteLine($"  Parsing positive coefficient: '{token}' -> number part: '{numberPart}'");
                             if (!double.TryParse(numberPart, NumberStyles.Float, CultureInfo.InvariantCulture, out coeff))
-                                throw new Exception($"Invalid coefficient '{token}' in constraint {i + 1}. Cannot parse number part: '{numberPart}'");
+                                throw new Exception($"Invalid coefficient '{token}' in constraint {i + 1}.");
                         }
                         else if (token.StartsWith("-"))
                         {
                             string numberPart = token.Substring(1);
-                            Console.WriteLine($"  Parsing negative coefficient: '{token}' -> number part: '{numberPart}'");
                             if (!double.TryParse(numberPart, NumberStyles.Float, CultureInfo.InvariantCulture, out coeff))
-                                throw new Exception($"Invalid coefficient '{token}' in constraint {i + 1}. Cannot parse number part: '{numberPart}'");
+                                throw new Exception($"Invalid coefficient '{token}' in constraint {i + 1}.");
                             coeff = -coeff;
                         }
                         else
                         {
-                            Console.WriteLine($"  Parsing unsigned coefficient: '{token}'");
-                            if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out coeff))
-                                throw new Exception($"Invalid coefficient '{token}' in constraint {i + 1}.");
+                            // According to specification, technological coefficients should have explicit operators
+                            throw new Exception($"Technological coefficient '{token}' in constraint {i + 1} must have explicit operator (+ or -). Use '+{token}' or '-{token}'.");
                         }
 
                         coeffs.Add(coeff);
                     }
 
-                    // Parse constraint type
+                    // Parse constraint relation (<=, >=, =)
                     if (model.VariableCount >= tokens.Length)
                         throw new Exception($"Missing constraint type in constraint {i + 1}.");
 
@@ -173,15 +183,14 @@ namespace LinearProgrammingProject.IO
                             throw new Exception($"Invalid constraint type '{typeStr}' in constraint {i + 1}. Use '<=', '>=', or '='.");
                     }
 
-                    // Parse RHS
+                    // Parse right-hand-side value
                     if (model.VariableCount + 1 >= tokens.Length)
                         throw new Exception($"Missing RHS value in constraint {i + 1}.");
 
-                    if (!double.TryParse(tokens[model.VariableCount + 1], out double rhs))
+                    if (!double.TryParse(tokens[model.VariableCount + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double rhs))
                         throw new Exception($"Invalid RHS value '{tokens[model.VariableCount + 1]}' in constraint {i + 1}.");
 
                     model.Constraints.Add(new Constraint(coeffs, type, rhs, $"C{i}"));
-                    Console.WriteLine($"Successfully parsed constraint {i + 1}: [{string.Join(", ", coeffs)}], type: {type}, RHS: {rhs}");
                 }
             }
             catch (Exception ex)
@@ -194,7 +203,11 @@ namespace LinearProgrammingProject.IO
         {
             try
             {
-                var types = line.Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string trimmedLine = line.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedLine))
+                    throw new Exception("Variable types line is empty.");
+                    
+                var types = trimmedLine.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                 if (types.Length != model.VariableCount)
                     throw new Exception($"Variable types line has {types.Length} types, but model has {model.VariableCount} variables.");
@@ -202,24 +215,44 @@ namespace LinearProgrammingProject.IO
                 for (int i = 0; i < types.Length; i++)
                 {
                     VariableType vt;
-                    switch (types[i].ToLower())
+                    string typeStr = types[i].ToLower();
+                    
+                    switch (typeStr)
                     {
                         case "+":
-                        case "-":
+                            // Non-negative continuous variable (x >= 0)
                             vt = VariableType.Continuous;
+                            model.Variables[i].LowerBound = 0.0;
+                            model.Variables[i].UpperBound = double.PositiveInfinity;
+                            break;
+                        case "-":
+                            // Non-positive continuous variable (x <= 0)
+                            vt = VariableType.Continuous;
+                            model.Variables[i].LowerBound = double.NegativeInfinity;
+                            model.Variables[i].UpperBound = 0.0;
                             break;
                         case "urs":
+                            // Unrestricted variable (can be positive or negative)
                             vt = VariableType.Unrestricted;
+                            model.Variables[i].LowerBound = double.NegativeInfinity;
+                            model.Variables[i].UpperBound = double.PositiveInfinity;
                             break;
                         case "int":
+                            // Integer variable (non-negative by default)
                             vt = VariableType.Integer;
+                            model.Variables[i].LowerBound = 0.0;
+                            model.Variables[i].UpperBound = double.PositiveInfinity;
                             break;
                         case "bin":
+                            // Binary variable (0 or 1)
                             vt = VariableType.Binary;
+                            model.Variables[i].LowerBound = 0.0;
+                            model.Variables[i].UpperBound = 1.0;
                             break;
                         default:
                             throw new Exception($"Invalid variable type '{types[i]}' for variable {i + 1}. Use '+', '-', 'urs', 'int', or 'bin'.");
                     }
+                    
                     model.Variables[i].Type = vt;
                 }
             }

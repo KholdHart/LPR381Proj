@@ -157,6 +157,7 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("  • universal_binary.txt  - Binary programming model");
             Console.WriteLine("  • knapsack_small.txt    - Small knapsack problem");
             Console.WriteLine("  • knapsack_medium.txt   - Medium knapsack problem");
+            Console.WriteLine("  • example_format.txt    - Example from specification");
             Console.ResetColor();
             
             Console.WriteLine("\n  Enter the file path (or just filename for samples):");
