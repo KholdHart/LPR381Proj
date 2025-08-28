@@ -22,7 +22,7 @@ namespace LinearProgrammingProject.Utilities
             while (true)
             {
                 DisplayMainMenu();
-                int choice = GetChoice(1, 4);
+                int choice = GetChoice(1, 5);
                 
                 Console.Clear();
                 switch (choice)
@@ -34,9 +34,12 @@ namespace LinearProgrammingProject.Utilities
                         SolveModel();
                         break;
                     case 3:
-                        SensitivityAnalysis();
+                        ViewOutputFile();
                         break;
                     case 4:
+                        SensitivityAnalysis();
+                        break;
+                    case 5:
                         ShowExitMessage();
                         return;
                 }
@@ -81,19 +84,20 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-            Console.WriteLine("  │                              MENU OPTIONS                             n     │");
+            Console.WriteLine("  │                              MENU OPTIONS                                   │");
             Console.WriteLine("  ├─────────────────────────────────────────────────────────────────────────────┤");
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  │  1. Load Model                                                              │");
             Console.WriteLine("  │  2. Solve Model                                                             │");
-            Console.WriteLine("  │  3. Sensitivity Analysis -                                                  │");
-            Console.WriteLine("  │  4. Exit                                                                    │");
+            Console.WriteLine("  │  3. Sensitivity Analysis                                                    │");
+            Console.WriteLine("  │  4. View Output File                                                        │");
+            Console.WriteLine("  │  5. Exit                                                                    │");
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
             
             Console.WriteLine();
-            Console.Write("  Please select an option (1-4): ");
+            Console.Write("  Please select an option (1-5): ");
         }
 
         private void DisplayModelStatus()
@@ -253,6 +257,11 @@ namespace LinearProgrammingProject.Utilities
                     {
                         Console.WriteLine("The problem is unbounded.");
                     }
+                    
+                    // Save Primal Simplex results to output file
+                    _outputWriter = new OutputWriter("output.txt");
+                    _outputWriter.WriteSolution(_model, GetAlgorithmName(alg), result.IterationSnapshots.Count);
+                    _outputWriter.SaveToFile();
                 }
                 else if (alg == 3)
                 {
@@ -296,6 +305,11 @@ namespace LinearProgrammingProject.Utilities
                     {
                         _model.Status = SolutionStatus.Infeasible;
                     }
+                    
+                    // Save Branch & Bound results to output file
+                    _outputWriter = new OutputWriter("output.txt");
+                    _outputWriter.WriteSolution(_model, GetAlgorithmName(alg), bnbResult.IterationLogs.Count);
+                    _outputWriter.SaveToFile();
                 }
                 else if (alg == 5)
                 {
@@ -385,19 +399,18 @@ namespace LinearProgrammingProject.Utilities
                     return;
                 }
                 
-                // Write output for other algorithms
-                _outputWriter = new OutputWriter("output.txt");
-                _outputWriter.WriteSolution(_model, GetAlgorithmName(alg), 5);
-                _outputWriter.SaveToFile();
-                
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\n  OPTIMIZATION COMPLETE");
-                Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ Algorithm: {GetAlgorithmName(alg),-25}                                      │");
-                Console.WriteLine($" │ Status: {_model.Status,-15}                                                 │");
-                Console.WriteLine("  │ Output: Detailed results saved to output.txt                                │");
-                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
-                Console.ResetColor();
+                // Show completion message for non-knapsack algorithms
+                if (alg != 5)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("\n  OPTIMIZATION COMPLETE");
+                    Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
+                    Console.WriteLine($" │ Algorithm: {GetAlgorithmName(alg),-25}                                      │");
+                    Console.WriteLine($" │ Status: {_model.Status,-15}                                                 │");
+                    Console.WriteLine("  │ Output: Detailed results saved to output.txt                                │");
+                    Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+                    Console.ResetColor();
+                }
             }
             catch (Exception ex)
             {
@@ -432,6 +445,74 @@ namespace LinearProgrammingProject.Utilities
                 case 5: return "Branch & Bound Knapsack";
                 default: return $"Algorithm {algorithmNumber}";
             }
+        }
+
+        private void ViewOutputFile()
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            DrawSeparator('═');
+            Console.WriteLine(CenterText("OUTPUT FILE VIEWER"));
+            DrawSeparator('═');
+            Console.ResetColor();
+            
+            string outputPath = "output.txt";
+            
+            try
+            {
+                if (!System.IO.File.Exists(outputPath))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+                    Console.WriteLine("    │ No output file found!                                                       │");
+                    Console.WriteLine("    │                                                                             │");
+                    Console.WriteLine("    │ The output file 'output.txt' does not exist.                                │");
+                    Console.WriteLine("    │ Please solve a model first to generate output.                              │");
+                    Console.WriteLine("    └─────────────────────────────────────────────────────────────────────────────┘");
+                    Console.ResetColor();
+                    Wait();
+                    return;
+                }
+                
+                string content = System.IO.File.ReadAllText(outputPath);
+                
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+                    Console.WriteLine("    │ Output file is empty!                                                       │");
+                    Console.WriteLine("    │                                                                             │");
+                    Console.WriteLine("    │ The output file exists but contains no data.                                │");
+                    Console.WriteLine("    │ Please solve a model to generate output.                                    │");
+                    Console.WriteLine("    └─────────────────────────────────────────────────────────────────────────────┘");
+                    Console.ResetColor();
+                    Wait();
+                    return;
+                }
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($"   │ Displaying contents of: {outputPath,-52}                                    │");
+                Console.WriteLine("    └─────────────────────────────────────────────────────────────────────────────┘");
+                Console.ResetColor();
+                
+                Console.WriteLine();
+                DrawSeparator('─');
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine(content);
+                Console.ResetColor();
+                DrawSeparator('─');
+                
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"\n  File size: {new System.IO.FileInfo(outputPath).Length} bytes");
+                Console.WriteLine($"  Last modified: {System.IO.File.GetLastWriteTime(outputPath):yyyy-MM-dd HH:mm:ss}");
+                Console.ResetColor();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Failed to read output file: {ex.Message}");
+            }
+            
+            Wait();
         }
 
         private void SensitivityAnalysis()
@@ -665,7 +746,7 @@ namespace LinearProgrammingProject.Utilities
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("  │  [5] Branch & Bound Knapsack                                                │");
+                Console.WriteLine("  │  5. Branch & Bound Knapsack                                                │");
                 Console.ResetColor();
             }
             
