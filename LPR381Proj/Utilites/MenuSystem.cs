@@ -47,16 +47,16 @@ namespace LinearProgrammingProject.Utilities
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Cyan;
-            DrawBox("LINEAR PROGRAMMING & INTEGER PROGRAMMING SOLVER", "Welcome to the Advanced Optimization Suite");
+            DrawBox("LP/IP OPTIMIZATION SOLVER", "Advanced Mathematical Programming Suite");
             Console.ResetColor();
             
             Console.WriteLine("\n" + CenterText("Supported Algorithms:"));
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(CenterText("• Primal Simplex Algorithm"));
-            Console.WriteLine(CenterText("• Revised Primal Simplex Algorithm"));
-            Console.WriteLine(CenterText("• Branch & Bound Simplex Algorithm"));
-            Console.WriteLine(CenterText("• Cutting Plane Algorithm"));
-            Console.WriteLine(CenterText("• Branch & Bound Knapsack Algorithm"));
+            Console.WriteLine(CenterText("• Primal Simplex Method"));
+            Console.WriteLine(CenterText("• Revised Primal Simplex"));
+            Console.WriteLine(CenterText("• Branch & Bound for Integer Programming"));
+            Console.WriteLine(CenterText("• Cutting Plane Method"));
+            Console.WriteLine(CenterText("• Knapsack Branch & Bound"));
             Console.ResetColor();
             
             Console.WriteLine("\n" + CenterText("Press any key to continue..."));
@@ -84,10 +84,10 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("  │                              MENU OPTIONS                             n     │");
             Console.WriteLine("  ├─────────────────────────────────────────────────────────────────────────────┤");
             Console.WriteLine("  │                                                                             │");
-            Console.WriteLine("  │  1. Load Model                                                             │");
-            Console.WriteLine("  │  2. Solve Model                                                            │");
-            Console.WriteLine("  │  3. Sensitivity Analysis -                                                 │");
-            Console.WriteLine("  │  4. Exit                                                                   │");
+            Console.WriteLine("  │  1. Load Model                                                              │");
+            Console.WriteLine("  │  2. Solve Model                                                             │");
+            Console.WriteLine("  │  3. Sensitivity Analysis -                                                  │");
+            Console.WriteLine("  │  4. Exit                                                                    │");
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
@@ -104,16 +104,16 @@ namespace LinearProgrammingProject.Utilities
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
                 Console.WriteLine("  │ STATUS: No model loaded                                                     │");
-                Console.WriteLine("  │ ACTION: Please load a model file before solving                            │");
+                Console.WriteLine("  │ ACTION: Please load a model file before solving                             │");
                 Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ STATUS: Model loaded successfully                                           │");
-                Console.WriteLine($" │ VARIABLES: {_model.Variables.Count,-3} │ CONSTRAINTS: {_model.Constraints.Count,-3} │ TYPE: {GetModelType(),-15} │");
-                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+                Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($" │ STATUS: Model loaded successfully                                                                                   │");
+                Console.WriteLine($" │ VARIABLES: {_model.Variables.Count,-3} │ CONSTRAINTS: {_model.Constraints.Count,-3} │ TYPE: {GetModelType(),-15}    │");
+                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
             }
             Console.ResetColor();
         }
@@ -176,10 +176,9 @@ namespace LinearProgrammingProject.Utilities
                 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  SUCCESS!");
-                Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ Model loaded successfully from: {path,-43} │");
-                Console.WriteLine($" │ Variables: {_model.Variables.Count,-10} │ Constraints: {_model.Constraints.Count,-10} │ Type: {GetModelType(),-15} │");
-                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+                Console.WriteLine("     ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($"    │ Model loaded successfully from: {path,-43}                                                                                │");
+                Console.WriteLine("     └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
                 Console.ResetColor();
             }
             catch (Exception ex)
@@ -314,7 +313,7 @@ namespace LinearProgrammingProject.Utilities
                     }
                     
                     Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
-                    Console.WriteLine("║                      STARTING KNAPSACK BRANCH & BOUND                        ║");
+                    Console.WriteLine("║                      STARTING KNAPSACK BRANCH & BOUND                         ║");
                     Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     Console.WriteLine("Processing...\n");
                     
@@ -372,10 +371,10 @@ namespace LinearProgrammingProject.Utilities
                     // Write knapsack-specific output
                     WriteKnapsackOutput(knapsackResult, "output.txt");
                     Console.WriteLine("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                    Console.WriteLine("║                      SOLUTION COMPLETE & SAVED                               ║");
-                    Console.WriteLine("║                                                                               ║");
-                    Console.WriteLine("║    Complete results written to: output.txt                                   ║");
-                    Console.WriteLine("║    Includes: Canonical form, all iterations, optimal solution               ║");
+                    Console.WriteLine("  ║                      SOLUTION COMPLETE & SAVED                                ║");
+                    Console.WriteLine("  ║                                                                               ║");
+                    Console.WriteLine("  ║    Complete results written to: output.txt                                    ║");
+                    Console.WriteLine("  ║    Includes: Canonical form, all iterations, optimal solution                 ║");
                     Console.WriteLine("  ╚═══════════════════════════════════════════════════════════════════════════════╝");
                     return; // Exit early for knapsack to avoid duplicate output writing
                 }
@@ -405,7 +404,7 @@ namespace LinearProgrammingProject.Utilities
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n  OPTIMIZATION FAILED");
                 Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ Error: {ex.Message,-67} │");
+                Console.WriteLine($" │ Error: {ex.Message,-67}                                                     │");
                 Console.WriteLine("  │                                                                             │");
                 Console.WriteLine("  │ Possible solutions:                                                         │");
                 Console.WriteLine("  │ • Check if the model file format is correct                                 │");
@@ -494,7 +493,7 @@ namespace LinearProgrammingProject.Utilities
                 {
                     writer.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
                     writer.WriteLine("║                    KNAPSACK BRANCH & BOUND ALGORITHM REPORT                   ║");
-                    writer.WriteLine("║                           All decimal values rounded to 3 points              ║");
+                    writer.WriteLine("║                     All decimal values rounded to 3 points                    ║");
                     writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     writer.WriteLine();
                     
@@ -639,28 +638,28 @@ namespace LinearProgrammingProject.Utilities
             
             Console.WriteLine($"     │  Current Model Type: {modelType,-25}                                       │");
             Console.WriteLine("      │                                                                            │");
-            Console.WriteLine("      │  [1]  Primal Simplex                                                       │");
-            Console.WriteLine("      │  [2]  Revised Primal Simplex                                               │");
+            Console.WriteLine("      │   1.  Primal Simplex                                                       │");
+            Console.WriteLine("      │   2.  Revised Primal Simplex                                               │");
             
             if (_model.IsIntegerProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  │  [3] Branch & Bound Simplex                                                │");
+                Console.WriteLine("  │   3. Branch & Bound Simplex                                                │");
                 Console.ResetColor();
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("  │  [3] Branch & Bound Simplex                                                 │");
+                Console.WriteLine("  │  3. Branch & Bound Simplex                                                 │");
                 Console.ResetColor();
             }
             
-                Console.WriteLine("  │  [4] Cutting Plane                                                          │");
+                Console.WriteLine("  │  4. Cutting Plane                                                          │");
             
             if (_model.IsBinaryProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  │  [5] Branch & Bound Knapsack                                                │");
+                Console.WriteLine("  │  5. Branch & Bound Knapsack                                                │");
                 Console.ResetColor();
             }
             else
@@ -689,10 +688,10 @@ namespace LinearProgrammingProject.Utilities
         private void DrawBox(string title, string subtitle = "")
         {
             DrawSeparator('╔', '╗', '═');
-            Console.WriteLine($"║{CenterText(title).Substring(2, MENU_WIDTH - 4)}║");
+            Console.WriteLine($"║{CenterTextForBox(title)}║");
             if (!string.IsNullOrEmpty(subtitle))
             {
-                Console.WriteLine($"║{CenterText(subtitle).Substring(2, MENU_WIDTH - 4)}║");
+                Console.WriteLine($"║{CenterTextForBox(subtitle)}║");
             }
             DrawSeparator('╚', '╝', '═');
         }
@@ -712,6 +711,20 @@ namespace LinearProgrammingProject.Utilities
             if (text.Length >= MENU_WIDTH) return text;
             int padding = (MENU_WIDTH - text.Length) / 2;
             return new string(' ', padding) + text + new string(' ', MENU_WIDTH - text.Length - padding);
+        }
+
+        private string CenterTextForBox(string text)
+        {
+            int availableWidth = MENU_WIDTH - 2; // Account for the box borders
+            if (text.Length >= availableWidth)
+            {
+                // Truncate if too long
+                text = text.Substring(0, availableWidth - 3) + "...";
+            }
+            
+            int padding = (availableWidth - text.Length) / 2;
+            int rightPadding = availableWidth - text.Length - padding;
+            return new string(' ', padding) + text + new string(' ', rightPadding);
         }
 
         private void Wait()
