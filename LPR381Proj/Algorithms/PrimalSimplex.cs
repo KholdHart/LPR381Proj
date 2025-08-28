@@ -36,6 +36,7 @@ namespace LinearProgrammingProject.Solver
             public double[,] FinalTableau { get; set; } = new double[0, 0];
             public List<string> Pivots { get; set; } = new List<string>();
             public List<string> IterationSnapshots { get; set; }
+            public string CanonicalForm { get; set; }
 
             public SimplexReport()
             {
@@ -51,7 +52,6 @@ namespace LinearProgrammingProject.Solver
                 options = new SimplexOptions();
             }
             
-
             ValidateModelForPrimalSimplex(model);
 
             // Work on local copies to avoid mutating the original coefficients when handling minimization
@@ -106,6 +106,7 @@ namespace LinearProgrammingProject.Solver
             {
                 ColumnLabels = colLabels,
                 RowLabels = rowLabels,
+                CanonicalForm = GenerateCanonicalForm(model, isMin)
             };
 
             int iter = 0;
@@ -177,18 +178,33 @@ namespace LinearProgrammingProject.Solver
         {
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"--- Iteration {iter} ---");
-            sb.Append("\t");
-            foreach (var col in colLabels) sb.Append(col + "\t");
+            
+            // Header row with column labels
+            sb.Append("Basic\t");
+            foreach (var col in colLabels) 
+            {
+                sb.Append($"{col}\t");
+            }
             sb.AppendLine();
+            
+            // Separator line
+            sb.AppendLine(new string('-', 8 + colLabels.Length * 8));
+            
+            // Data rows
             for (int i = 0; i < tableau.GetLength(0); i++)
             {
-                sb.Append(rowLabels[i] + "\t");
+                sb.Append($"{rowLabels[i]}\t");
                 for (int j = 0; j < tableau.GetLength(1); j++)
                 {
-                    sb.Append(tableau[i, j].ToString("F2") + "\t");
+                    double value = tableau[i, j];
+                    // Format small numbers as 0 for cleaner display
+                    if (Math.Abs(value) < 1e-10) value = 0;
+                    sb.Append($"{value:F3}\t");
                 }
                 sb.AppendLine();
             }
+            sb.AppendLine();
+            
             report.IterationSnapshots.Add(sb.ToString());
         }
 
@@ -307,6 +323,62 @@ namespace LinearProgrammingProject.Solver
             report.Iterations = iterations;
             report.FinalTableau = (double[,])T.Clone();
             return report;
+        }
+
+        private static string GenerateCanonicalForm(LinearProgrammingModel model, bool isMinConverted)
+        {
+            var form = new System.Text.StringBuilder();
+            
+            form.AppendLine("=== CANONICAL FORM ===");
+            form.AppendLine();
+            
+            // Objective function (show original, then converted if needed)
+            form.AppendLine("Original Problem:");
+            form.AppendLine(model.GetObjectiveFunctionString());
+            
+            if (isMinConverted)
+            {
+                form.AppendLine();
+                form.AppendLine("Converted to Maximization (multiply by -1):");
+                var terms = model.Variables.Select((v, i) => 
+                    $"{(-model.ObjectiveCoefficients[i] >= 0 ? "+" : "")}{-model.ObjectiveCoefficients[i]:F3}*{v.Name}");
+                form.AppendLine($"Maximize: {string.Join(" ", terms)}");
+            }
+            
+            form.AppendLine();
+            form.AppendLine("Subject to:");
+            
+            // Show original constraints
+            var constraintStrings = model.GetConstraintStrings();
+            foreach (var constraint in constraintStrings)
+            {
+                form.AppendLine($"  {constraint}");
+            }
+            
+            form.AppendLine();
+            form.AppendLine("Standard Form (with slack variables):");
+            
+            // Show with slack variables added
+            for (int i = 0; i < model.Constraints.Count; i++)
+            {
+                var constraint = model.Constraints[i];
+                var terms = constraint.Coefficients.Select((c, j) => 
+                    $"{(c >= 0 && j > 0 ? "+" : "")}{c:F3}*{model.Variables[j].Name}");
+                form.AppendLine($"  {string.Join(" ", terms)} + s{i + 1} = {constraint.RightHandSide:F3}");
+            }
+            
+            form.AppendLine();
+            form.AppendLine("Variable bounds:");
+            foreach (var variable in model.Variables)
+            {
+                form.AppendLine($"  {variable.Name} ≥ 0");
+            }
+            for (int i = 0; i < model.Constraints.Count; i++)
+            {
+                form.AppendLine($"  s{i + 1} ≥ 0");
+            }
+            
+            return form.ToString();
         }
     }
 }

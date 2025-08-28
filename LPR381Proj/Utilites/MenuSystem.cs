@@ -69,7 +69,10 @@ namespace LinearProgrammingProject.Utilities
                     var solver = new PrimalSimplexSolver();
                     var result = solver.Solve(_model);
                     
-                    Console.WriteLine("\n=== PRIMAL SIMPLEX SOLUTION ===");
+                    // Display canonical form
+                    Console.WriteLine(result.CanonicalForm);
+                    
+                    Console.WriteLine("\n=== PRIMAL SIMPLEX TABLEAU ITERATIONS ===");
                     foreach (var snapshot in result.IterationSnapshots)
                     {
                         Console.WriteLine(snapshot);
@@ -77,11 +80,27 @@ namespace LinearProgrammingProject.Utilities
                     
                     if (result.Pivots.Count > 0)
                     {
-                        Console.WriteLine("\nPivot Operations:");
+                        Console.WriteLine("\nPivot Operations Summary:");
                         foreach (var pivot in result.Pivots)
                         {
                             Console.WriteLine($"  {pivot}");
                         }
+                    }
+                    
+                    Console.WriteLine("\n=== FINAL SOLUTION ===");
+                    Console.WriteLine($"Status: {_model.Status}");
+                    if (_model.Status == SolutionStatus.Optimal)
+                    {
+                        Console.WriteLine($"Optimal Value: {_model.OptimalValue:F6}");
+                        Console.WriteLine("Optimal Solution:");
+                        foreach (var kvp in _model.OptimalSolution)
+                        {
+                            Console.WriteLine($"  {kvp.Key} = {kvp.Value:F6}");
+                        }
+                    }
+                    else if (_model.Status == SolutionStatus.Unbounded)
+                    {
+                        Console.WriteLine("The problem is unbounded.");
                     }
                 }
                 else if (alg == 3)

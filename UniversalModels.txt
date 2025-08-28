@@ -1,0 +1,104 @@
+=== ESSENTIAL LINEAR PROGRAMMING MODELS ===
+Streamlined collection for ALL Algorithms: Primal Simplex & Branch & Bound
+
+=== ALGORITHM COMPATIBILITY ===
+
+✅ PRIMAL SIMPLEX (Algorithm 1):
+   - Requires: Continuous variables (+ +)
+   - Requires: ≤ constraints only
+   - Requires: Non-negative RHS
+   - Supports: Maximization and Minimization
+
+✅ BRANCH & BOUND SIMPLEX (Algorithm 3):
+   - Requires: Integer (int) or Binary (bin) variables
+   - Requires: ≤ constraints only
+   - Requires: Non-negative RHS
+   - Supports: Maximization and Minimization
+
+=== ESSENTIAL MODEL FILES (CLEANED UP) ===
+
+📁 PRIMAL SIMPLEX FILES:
+   • universal_lp.txt     - Basic continuous LP problem
+   • model.txt           - Standard continuous LP (existing)
+
+📁 BRANCH & BOUND FILES:
+   • universal_ip.txt     - Basic integer programming
+   • universal_binary.txt - Binary programming (0-1 variables)
+
+=== ESSENTIAL MODEL SPECIFICATIONS ===
+
+MODEL 1: universal_lp.txt (PRIMAL SIMPLEX)
+max 3 2
+1 2 <= 10
+2 1 <= 8
+1 1 <= 6
++ +
+→ Basic continuous LP for Algorithm 1 (Primal Simplex)
+
+MODEL 2: model.txt (PRIMAL SIMPLEX - EXISTING)
+max -60 -30 -20
+8 6 1 <= 48
+4 2 1.5 <= 20
+2 1.5 0.5 <= 8
++ + +
+→ Standard 3-variable continuous LP
+
+MODEL 3: universal_ip.txt (BRANCH & BOUND)
+max 3 2
+1 2 <= 10
+2 1 <= 8
+1 1 <= 6
+int int
+→ Basic integer programming for Algorithm 3 (Branch & Bound)
+
+MODEL 4: universal_binary.txt (BRANCH & BOUND)
+max 5 8 3
+2 3 1 <= 6
+1 2 2 <= 5
+3 1 2 <= 7
+bin bin bin
+→ Binary programming (0-1 variables) for Algorithm 3
+
+=== QUICK START GUIDE ===
+
+🚀 TESTING INSTRUCTIONS:
+
+1. Run Program:
+   .\bin\Debug\LPR381Proj.exe
+
+2. Test Primal Simplex:
+   - Load Model: Choose 1, Enter "universal_lp.txt"
+   - Solve Model: Choose 2, then 1 (Primal Simplex)
+
+3. Test Branch & Bound:
+   - Load Model: Choose 1, Enter "universal_ip.txt"
+   - Solve Model: Choose 2, then 3 (Branch & Bound)
+
+✅ ALGORITHM COMPATIBILITY MATRIX:
+
+File Name              | Primal Simplex | Branch & Bound
+-----------------------|----------------|---------------
+universal_lp.txt       |       ✅       |       ❌
+model.txt              |       ✅       |       ❌
+universal_ip.txt       |       ❌       |       ✅
+universal_binary.txt   |       ❌       |       ✅
+
+=== EXPECTED OUTPUTS ===
+
+PRIMAL SIMPLEX:
+✅ Canonical form with slack variables
+✅ All tableau iterations (formatted tables)
+✅ Pivot operations summary
+✅ Final optimal solution
+
+BRANCH & BOUND:
+✅ Canonical form display
+✅ Branch & bound tree exploration
+✅ Node-by-node simplex iterations
+✅ Fathoming decisions and reasons
+✅ Best integer solution found
+
+=== FILE FORMAT ===
+Line 1: max/min [objective coefficients]
+Lines 2-n: [constraint coefficients] <= [RHS]
+Last line: [variable types: +, int, bin]
