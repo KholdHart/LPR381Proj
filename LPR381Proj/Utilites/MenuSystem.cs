@@ -285,12 +285,6 @@ namespace LinearProgrammingProject.Utilities
                     // Display branch and bound tree
                     bnbSolver.DisplayBranchAndBoundTree(bnbResult);
                     
-                    Console.WriteLine("\nWould you like to see all simplex table iterations? (y/n)");
-                    if (Console.ReadLine()?.ToLower() == "y")
-                    {
-                        bnbSolver.DisplayAllTableIterations(bnbResult);
-                    }
-                    
                     // Update model with best solution
                     if (bnbResult.BestIntegerSolution != null)
                     {
@@ -341,14 +335,7 @@ namespace LinearProgrammingProject.Utilities
                     // Show backtracking process
                     knapsackSolver.DisplayBacktrackingProcess(knapsackResult);
                     
-                    Console.WriteLine("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                    Console.WriteLine("  ║                              DETAILED ANALYSIS                                ║");
-                    Console.WriteLine("  ╚═══════════════════════════════════════════════════════════════════════════════╝");
-                    Console.WriteLine("Would you like to see all node table iterations? (y/n): ");
-                    if (Console.ReadLine()?.ToLower() == "y")
-                    {
-                        knapsackSolver.DisplayAllTableIterations(knapsackResult);
-                    }
+
                     
                     // Update model with best solution
                     if (knapsackResult.BestSolution != null)

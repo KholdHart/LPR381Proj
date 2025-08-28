@@ -104,17 +104,17 @@ namespace LinearProgrammingProject.Algorithms
             // Sort items by value-to-weight ratio (descending)
             report.Items = report.Items.OrderByDescending(item => item.Ratio).ToList();
             
-            report.IterationLogs.Add("╔═══════════════════════════════════════════════════════════════════════════════╗");
-            report.IterationLogs.Add("║                    ITEMS SORTED BY VALUE/WEIGHT RATIO                        ║");
-            report.IterationLogs.Add("╠═══════════════════════════════════════════════════════════════════════════════╣");
-            report.IterationLogs.Add("║  Item  │  Value  │ Weight  │  Ratio  │           Description                ║");
-            report.IterationLogs.Add("╠════════╪═════════╪═════════╪═════════╪══════════════════════════════════════╣");
+            report.IterationLogs.Add("      ╔═════════════════════════════════════════════════════════════════════════════════════════════════╗");
+            report.IterationLogs.Add("      ║                    ITEMS SORTED BY VALUE/WEIGHT RATIO                                           ║");
+            report.IterationLogs.Add("      ╠═════════════════════════════════════════════════════════════════════════════════════════════════╣");
+            report.IterationLogs.Add("      ║  Item  │  Value  │ Weight  │  Ratio  │           Description                                    ║");
+            report.IterationLogs.Add("      ╠════════╪═════════╪═════════╪═════════╪══════════════════════════════════════════════════════════╣");
             foreach (var item in report.Items)
             {
                 string desc = $"Higher ratio = better efficiency";
-                report.IterationLogs.Add($"║  {item.Name,-4}  │ {item.Value,7:F3} │ {item.Weight,7:F3} │ {item.Ratio,7:F3} │ {desc,-36} ║");
+                report.IterationLogs.Add($" ║  {item.Name,-4}  │ {item.Value,7:F3} │ {item.Weight,7:F3} │ {item.Ratio,7:F3} │ {desc,-36}      ║");
             }
-            report.IterationLogs.Add("╚════════╧═════════╧═════════╧═════════╧══════════════════════════════════════╝");
+            report.IterationLogs.Add("      ╚════════╧═════════╧═════════╧═════════╧══════════════════════════════════════════════════════════╝");
             report.IterationLogs.Add("");
 
             // Initialize with root node
@@ -135,8 +135,8 @@ namespace LinearProgrammingProject.Algorithms
                 report.NodesExplored++;
 
                 report.IterationLogs.Add($"\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                report.IterationLogs.Add($"║                              NODE {currentNode.Id,2}                                      ║");
-                report.IterationLogs.Add($"╚═══════════════════════════════════════════════════════════════════════════════╝");
+                report.IterationLogs.Add($"  ║                              NODE {currentNode.Id,2}                          ║");
+                report.IterationLogs.Add($"  ╚═══════════════════════════════════════════════════════════════════════════════╝");
                 
                 if (currentNode.ParentId > 0)
                 {
@@ -156,9 +156,9 @@ namespace LinearProgrammingProject.Algorithms
                 {
                     currentNode.IsFathomed = true;
                     report.NodesFathomed++;
-                    report.IterationLogs.Add("┌─────────────────────────────────────────────────────────────────────────────┐");
-                    report.IterationLogs.Add($"│ ❌ NODE {currentNode.Id,2} FATHOMED: {currentNode.FathomReason,-50} │");
-                    report.IterationLogs.Add("└─────────────────────────────────────────────────────────────────────────────┘");
+                    report.IterationLogs.Add(" ┌─────────────────────────────────────────────────────────────────────────────┐");
+                    report.IterationLogs.Add($"│  NODE {currentNode.Id,2} FATHOMED: {currentNode.FathomReason,-50}           │");
+                    report.IterationLogs.Add(" └─────────────────────────────────────────────────────────────────────────────┘");
                     continue;
                 }
 
@@ -170,17 +170,17 @@ namespace LinearProgrammingProject.Algorithms
                     {
                         report.BestSolution = currentNode;
                         report.BestValue = currentNode.CurrentValue;
-                        report.IterationLogs.Add("┌─────────────────────────────────────────────────────────────────────────────┐");
-                        report.IterationLogs.Add("│ 🏆 NEW BEST SOLUTION FOUND!                                                │");
+                        report.IterationLogs.Add(" ┌─────────────────────────────────────────────────────────────────────────────┐");
+                        report.IterationLogs.Add(" │  NEW BEST SOLUTION FOUND!                                                   │");
                         report.IterationLogs.Add($"│    Value: {currentNode.CurrentValue,7:F3}   Weight: {currentNode.CurrentWeight,7:F3}                                │");
                         report.IterationLogs.Add($"│    Items: [{string.Join(", ", currentNode.IncludedItems.Select(i => report.Items[i].Name)),-50}] │");
-                        report.IterationLogs.Add("└─────────────────────────────────────────────────────────────────────────────┘");
+                        report.IterationLogs.Add(" └─────────────────────────────────────────────────────────────────────────────┘");
                     }
                     else
                     {
-                        report.IterationLogs.Add("┌─────────────────────────────────────────────────────────────────────────────┐");
-                        report.IterationLogs.Add($"│ ✅ Complete solution (Value: {currentNode.CurrentValue:F3}) - Not better than current best │");
-                        report.IterationLogs.Add("└─────────────────────────────────────────────────────────────────────────────┘");
+                        report.IterationLogs.Add(" ┌─────────────────────────────────────────────────────────────────────────────┐");
+                        report.IterationLogs.Add($"│ Complete solution (Value: {currentNode.CurrentValue:F3}) - Not better than current best │");
+                        report.IterationLogs.Add(" └─────────────────────────────────────────────────────────────────────────────┘");
                     }
                     currentNode.IsFathomed = true;
                     currentNode.FathomReason = "Complete solution";
@@ -194,34 +194,34 @@ namespace LinearProgrammingProject.Algorithms
                     {
                         nodeQueue.Enqueue(child);
                     }
-                    report.IterationLogs.Add("┌─────────────────────────────────────────────────────────────────────────────┐");
-                    report.IterationLogs.Add($"│ 🌳 BRANCHING on item {report.Items[currentNode.Level].Name,-10}                                        │");
-                    report.IterationLogs.Add("└─────────────────────────────────────────────────────────────────────────────┘");
+                    report.IterationLogs.Add(" ┌─────────────────────────────────────────────────────────────────────────────┐");
+                    report.IterationLogs.Add($"│ BRANCHING on item {report.Items[currentNode.Level].Name,-10}                │");
+                    report.IterationLogs.Add(" └─────────────────────────────────────────────────────────────────────────────┘");
                 }
             }
 
             report.TotalNodes = nodeCounter;
             
             // Final summary with enhanced formatting
-            report.IterationLogs.Add("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-            report.IterationLogs.Add("║                         BRANCH & BOUND SUMMARY                               ║");
-            report.IterationLogs.Add("╠═══════════════════════════════════════════════════════════════════════════════╣");
-            report.IterationLogs.Add($"║ Total nodes created:     {report.TotalNodes,3}                                            ║");
-            report.IterationLogs.Add($"║ Nodes explored:          {report.NodesExplored,3}                                            ║");
-            report.IterationLogs.Add($"║ Nodes fathomed:          {report.NodesFathomed,3}                                            ║");
-            report.IterationLogs.Add($"║ Efficiency:              {(double)report.NodesFathomed / report.TotalNodes * 100,6:F1}%                                      ║");
-            report.IterationLogs.Add("╚═══════════════════════════════════════════════════════════════════════════════╝");
+            report.IterationLogs.Add("\n╔═════════════════════════════════════════════════════════════════════════════════════════════════╗");
+            report.IterationLogs.Add("  ║                         BRANCH & BOUND SUMMARY                                                  ║");
+            report.IterationLogs.Add("  ╠═════════════════════════════════════════════════════════════════════════════════════════════════╣");
+            report.IterationLogs.Add($" ║ Total nodes created:     {report.TotalNodes,3}                                                  ║");
+            report.IterationLogs.Add($" ║ Nodes explored:          {report.NodesExplored,3}                                               ║");
+            report.IterationLogs.Add($" ║ Nodes fathomed:          {report.NodesFathomed,3}                                               ║");
+            report.IterationLogs.Add($" ║ Efficiency:              {(double)report.NodesFathomed / report.TotalNodes * 100,6:F1}%         ║");
+            report.IterationLogs.Add("  ╚═════════════════════════════════════════════════════════════════════════════════════════════════╝");
             
             if (report.BestSolution != null)
             {
                 report.IterationLogs.Add("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                report.IterationLogs.Add("║                            🏆 OPTIMAL SOLUTION                               ║");
-                report.IterationLogs.Add("╠═══════════════════════════════════════════════════════════════════════════════╣");
-                report.IterationLogs.Add($"║ Optimal Value:           {report.BestValue,7:F3}                                      ║");
-                report.IterationLogs.Add($"║ Total Weight:            {report.BestSolution.CurrentWeight,7:F3}                                      ║");
-                report.IterationLogs.Add($"║ Capacity Utilization:    {(report.BestSolution.CurrentWeight / report.Capacity * 100),6:F1}%                                       ║");
-                report.IterationLogs.Add("║                                                                               ║");
-                report.IterationLogs.Add("║ Items Selected:                                                               ║");
+                report.IterationLogs.Add("  ║                             OPTIMAL SOLUTION                                  ║");
+                report.IterationLogs.Add("  ╠═══════════════════════════════════════════════════════════════════════════════╣");
+                report.IterationLogs.Add($" ║ Optimal Value:           {report.BestValue,7:F3}                                      ║");
+                report.IterationLogs.Add($" ║ Total Weight:            {report.BestSolution.CurrentWeight,7:F3}                                      ║");
+                report.IterationLogs.Add($" ║ Capacity Utilization:    {(report.BestSolution.CurrentWeight / report.Capacity * 100),6:F1}%                                       ║");
+                report.IterationLogs.Add("  ║                                                                               ║");
+                report.IterationLogs.Add("  ║ Items Selected:                                                               ║");
                 
                 foreach (var itemIndex in report.BestSolution.IncludedItems)
                 {
@@ -229,8 +229,8 @@ namespace LinearProgrammingProject.Algorithms
                     report.IterationLogs.Add($"║   {item.Name}: Value={item.Value,7:F3}, Weight={item.Weight,7:F3}, Ratio={item.Ratio,7:F3}           ║");
                 }
                 
-                report.IterationLogs.Add("║                                                                               ║");
-                report.IterationLogs.Add("║ Complete Variable Assignment:                                                 ║");
+                report.IterationLogs.Add(" ║                                                                               ║");
+                report.IterationLogs.Add(" ║ Complete Variable Assignment:                                                 ║");
                 for (int i = 0; i < report.Items.Count; i++)
                 {
                     var item = report.Items[i];
@@ -242,8 +242,8 @@ namespace LinearProgrammingProject.Algorithms
             else
             {
                 report.IterationLogs.Add("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                report.IterationLogs.Add("║                          ❌ NO FEASIBLE SOLUTION                             ║");
-                report.IterationLogs.Add("╚═══════════════════════════════════════════════════════════════════════════════╝");
+                report.IterationLogs.Add("  ║                           NO FEASIBLE SOLUTION                                ║");
+                report.IterationLogs.Add("  ╚═══════════════════════════════════════════════════════════════════════════════╝");
             }
 
             return report;
@@ -383,7 +383,7 @@ namespace LinearProgrammingProject.Algorithms
             
             // Enhanced table header with better formatting
             table.AppendLine("┌─────────────────────────────────────────────────────────────────────────────┐");
-            table.AppendLine("│                           NODE STATE TABLE                                 │");
+            table.AppendLine("│                           NODE STATE TABLE                                  │");
             table.AppendLine("├─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────────────┤");
             table.AppendLine("│  Item   │ Status  │  Value  │ Weight  │ Ratio   │ CumVal  │   CumWeight     │");
             table.AppendLine("├─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────────────┤");
@@ -514,14 +514,14 @@ namespace LinearProgrammingProject.Algorithms
         public void DisplayAllTableIterations(KnapsackReport report)
         {
             Console.WriteLine("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                         ALL NODE TABLE ITERATIONS                            ║");
-            Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine("  ║                         ALL NODE TABLE ITERATIONS                             ║");
+            Console.WriteLine("  ╚═══════════════════════════════════════════════════════════════════════════════╝");
             
             foreach (var node in report.AllNodes)
             {
                 Console.WriteLine($"\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-                Console.WriteLine($"║                           NODE {node.Id,2} DETAILED TABLE                             ║");
-                Console.WriteLine($"╚═══════════════════════════════════════════════════════════════════════════════╝");
+                Console.WriteLine($"  ║                           NODE {node.Id,2} DETAILED TABLE                     ║");
+                Console.WriteLine($"  ╚═══════════════════════════════════════════════════════════════════════════════╝");
                 
                 if (node.ParentId > 0)
                 {
@@ -537,9 +537,9 @@ namespace LinearProgrammingProject.Algorithms
                 
                 if (node.IsFathomed)
                 {
-                    Console.WriteLine("┌─────────────────────────────────────────────────────────────────────────────┐");
-                    Console.WriteLine($"│ ❌ FATHOMED: {node.FathomReason,-60} │");
-                    Console.WriteLine("└─────────────────────────────────────────────────────────────────────────────┘");
+                    Console.WriteLine(" ┌─────────────────────────────────────────────────────────────────────────────┐");
+                    Console.WriteLine($"│  FATHOMED: {node.FathomReason,-60}                                          │");
+                    Console.WriteLine(" └─────────────────────────────────────────────────────────────────────────────┘");
                 }
                 
                 Console.WriteLine("\n" + new string('═', 79));
@@ -549,7 +549,7 @@ namespace LinearProgrammingProject.Algorithms
         public void DisplayBacktrackingProcess(KnapsackReport report)
         {
             Console.WriteLine("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                           🔄 BACKTRACKING PROCESS                            ║");
+            Console.WriteLine("║                           BACKTRACKING PROCESS                            ║");
             Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
             
             Console.WriteLine("┌─────────────────────────────────────────────────────────────────────────────┐");
@@ -558,13 +558,13 @@ namespace LinearProgrammingProject.Algorithms
             Console.WriteLine("│ Backtracking occurs when nodes are fathomed (pruned) for efficiency         │");
             Console.WriteLine("└─────────────────────────────────────────────────────────────────────────────┘");
             
-            Console.WriteLine("\n📊 EXPLORATION STATISTICS:");
+            Console.WriteLine("\n EXPLORATION STATISTICS:");
             Console.WriteLine($"┌─ Total possible combinations: 2^{report.Items.Count} = {Math.Pow(2, report.Items.Count)}");
             Console.WriteLine($"├─ Nodes actually created: {report.TotalNodes}");
             Console.WriteLine($"├─ Nodes fathomed (pruned): {report.NodesFathomed}");
             Console.WriteLine($"└─ Efficiency gained: {(1 - (double)report.TotalNodes / Math.Pow(2, report.Items.Count)) * 100:F1}% reduction in search space");
             
-            Console.WriteLine("\n🌳 BRANCHING STRATEGY:");
+            Console.WriteLine("\n BRANCHING STRATEGY:");
             Console.WriteLine("┌─ Depth 0: Root node (no decisions made)");
             for (int i = 0; i < report.Items.Count; i++)
             {
