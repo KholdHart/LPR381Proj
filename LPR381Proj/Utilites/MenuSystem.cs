@@ -113,10 +113,10 @@ namespace LinearProgrammingProject.Utilities
             else
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ STATUS: Model loaded successfully                                                                         │");
-                Console.WriteLine($" │ VARIABLES:{_model.Variables.Count,-3}│CONSTRAINTS:{_model.Constraints.Count,-3}│TYPE: {GetModelType(),-15}│");
-                Console.WriteLine("  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                Console.WriteLine("  ───────────────────────────────────────────────────────────────────────────────");
+                Console.WriteLine($"   STATUS: Model loaded successfully ");
+                Console.WriteLine($"   VARIABLES:{_model.Variables.Count,-3}│CONSTRAINTS:{_model.Constraints.Count,-3}│TYPE: {GetModelType(),-15} ");
+                Console.WriteLine("  ───────────────────────────────────────────────────────────────────────────────");
             }
             Console.ResetColor();
         }
@@ -180,9 +180,9 @@ namespace LinearProgrammingProject.Utilities
                 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  SUCCESS!");
-                Console.WriteLine("     ┌───────────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($"    │ Model loaded successfully from: {path,-43}                                        │");
-                Console.WriteLine("     └───────────────────────────────────────────────────────────────────────────────────┘");
+                Console.WriteLine("   ┌───────────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine($"   │     Model loaded successfully from: {path,-43}   | ");
+                Console.WriteLine("   └───────────────────────────────────────────────────────────────────────────────────┘");
                 Console.ResetColor();
             }
             catch (Exception ex)
@@ -379,8 +379,8 @@ namespace LinearProgrammingProject.Utilities
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  OPTIMIZATION COMPLETE");
                 Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine($" │ Algorithm: {GetAlgorithmName(alg),-25}                                      │");
-                Console.WriteLine($" │ Status: {_model.Status,-15}                                                 │");
+                Console.WriteLine($"  │ Algorithm: {GetAlgorithmName(alg),-25}                                        │");
+                Console.WriteLine($"  │ Status: {_model.Status,-15}                                                     │");
                 Console.WriteLine("  │ Output: Detailed results saved to output.txt                                │");
                 Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
                 Console.ResetColor();
@@ -739,49 +739,49 @@ namespace LinearProgrammingProject.Utilities
 
         private void DisplayAlgorithmMenu()
         {
-            Console.WriteLine("\n   ┌─────────────────────────────────────────────────────────────────────────────┐");
-            Console.WriteLine("     │                           AVAILABLE ALGORITHMS                              │");
-            Console.WriteLine("     ├─────────────────────────────────────────────────────────────────────────────┤");
-            Console.WriteLine("     │                                                                             │");
+            Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+            Console.WriteLine("  │                           AVAILABLE ALGORITHMS                              │");
+            Console.WriteLine("  ├─────────────────────────────────────────────────────────────────────────────┤");
+            Console.WriteLine("  │                                                                             │");
             
             // Show algorithm compatibility
             string modelType = GetModelType();
             
-            Console.WriteLine($"    │  Current Model Type: {modelType,-25}                                        │");
-            Console.WriteLine("     │                                                                             │");
-            Console.WriteLine("     │   1.  Primal Simplex                                                        │");
-            Console.WriteLine("     │   2.  Revised Primal Simplex                                                │");
+            Console.WriteLine($"  │  Current Model Type: {modelType,-25}                              │");
+            Console.WriteLine("  │                                                                             │");
+            Console.WriteLine("  │   1.  Primal Simplex                                                        │");
+            Console.WriteLine("  │   2.  Revised Primal Simplex                                                │");
             
             if (_model.IsIntegerProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(" │   3. Branch & Bound Simplex                                                 │");
+                Console.WriteLine("  │   3. Branch & Bound Simplex                                                 │");
                 Console.ResetColor();
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine(" │  3. Branch & Bound Simplex                                                  │");
+                Console.WriteLine("  │   3. Branch & Bound Simplex                                                  │");
                 Console.ResetColor();
             }
             
-                Console.WriteLine(" │  4. Cutting Plane                                                           │");
+                Console.WriteLine("  │   4. Cutting Plane                                                          │");
             
             if (_model.IsBinaryProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(" │  5. Branch & Bound Knapsack                                                 │");
+                Console.WriteLine("  │   5. Branch & Bound Knapsack                                                │");
                 Console.ResetColor();
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine(" │  5. Branch & Bound Knapsack                                                 │");
+                Console.WriteLine("  │   5. Branch & Bound Knapsack                                                │");
                 Console.ResetColor();
             }
             
-            Console.WriteLine("     │                                                                             │");
-            Console.WriteLine("     └─────────────────────────────────────────────────────────────────────────────┘");
+            Console.WriteLine("  │                                                                             │");
+            Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             
             Console.WriteLine("\n  Select algorithm (1-5): ");
         }
