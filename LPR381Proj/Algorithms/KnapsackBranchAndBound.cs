@@ -45,6 +45,8 @@ namespace LinearProgrammingProject.Algorithms
             public List<KnapsackNode> AllNodes { get; set; }
             public KnapsackNode BestSolution { get; set; }
             public double BestValue { get; set; }
+            public List<KnapsackNode> AllCandidates { get; set; }
+            public KnapsackNode BestCandidate { get; set; }
             public int TotalNodes { get; set; }
             public int NodesExplored { get; set; }
             public int NodesFathomed { get; set; }
@@ -56,6 +58,7 @@ namespace LinearProgrammingProject.Algorithms
             public KnapsackReport()
             {
                 AllNodes = new List<KnapsackNode>();
+                AllCandidates = new List<KnapsackNode>();
                 BestValue = 0;
                 IterationLogs = new List<string>();
                 Items = new List<KnapsackItem>();
@@ -148,6 +151,19 @@ namespace LinearProgrammingProject.Algorithms
                 // Calculate current state
                 CalculateNodeState(currentNode, report.Items, report.Capacity);
                 
+                // Add to candidates list for z-value tracking (feasible nodes only)
+                if (currentNode.CurrentWeight <= report.Capacity)
+                {
+                    report.AllCandidates.Add(currentNode);
+                    
+                    // Update best candidate based on highest z-value (for maximization)
+                    if (report.BestCandidate == null || currentNode.CurrentValue > report.BestCandidate.CurrentValue)
+                    {
+                        report.BestCandidate = currentNode;
+                        report.IterationLogs.Add($"NEW BEST CANDIDATE: z = {currentNode.CurrentValue:F3}");
+                    }
+                }
+                
                 // Display table iteration for this node
                 DisplayNodeTable(currentNode, report);
 
@@ -171,15 +187,15 @@ namespace LinearProgrammingProject.Algorithms
                         report.BestSolution = currentNode;
                         report.BestValue = currentNode.CurrentValue;
                         report.IterationLogs.Add(" ┌─────────────────────────────────────────────────────────────────────────────┐");
-                        report.IterationLogs.Add(" │  NEW BEST SOLUTION FOUND!                                                   │");
-                        report.IterationLogs.Add($"│    Value: {currentNode.CurrentValue,7:F3}   Weight: {currentNode.CurrentWeight,7:F3}                                │");
+                        report.IterationLogs.Add(" │  NEW BEST SOLUTION FOUND! (Highest z-value)                                 │");
+                        report.IterationLogs.Add($"│    Value (z): {currentNode.CurrentValue,7:F3}   Weight: {currentNode.CurrentWeight,7:F3}                                │");
                         report.IterationLogs.Add($"│    Items: [{string.Join(", ", currentNode.IncludedItems.Select(i => report.Items[i].Name)),-50}] │");
                         report.IterationLogs.Add(" └─────────────────────────────────────────────────────────────────────────────┘");
                     }
                     else
                     {
                         report.IterationLogs.Add(" ┌─────────────────────────────────────────────────────────────────────────────┐");
-                        report.IterationLogs.Add($"│ Complete solution (Value: {currentNode.CurrentValue:F3}) - Not better than current best │");
+                        report.IterationLogs.Add($"│ Complete solution (z-value: {currentNode.CurrentValue:F3}) - Not better than current best │");
                         report.IterationLogs.Add(" └─────────────────────────────────────────────────────────────────────────────┘");
                     }
                     currentNode.IsFathomed = true;
@@ -209,8 +225,29 @@ namespace LinearProgrammingProject.Algorithms
             report.IterationLogs.Add($" ║ Total nodes created:     {report.TotalNodes,3}                                                  ║");
             report.IterationLogs.Add($" ║ Nodes explored:          {report.NodesExplored,3}                                               ║");
             report.IterationLogs.Add($" ║ Nodes fathomed:          {report.NodesFathomed,3}                                               ║");
+            report.IterationLogs.Add($" ║ Total candidates:        {report.AllCandidates.Count,3}                                                  ║");
             report.IterationLogs.Add($" ║ Efficiency:              {(double)report.NodesFathomed / report.TotalNodes * 100,6:F1}%         ║");
             report.IterationLogs.Add("  ╚═════════════════════════════════════════════════════════════════════════════════════════════════╝");
+            
+            // Display best candidate (highest z-value for maximization)
+            if (report.BestCandidate != null)
+            {
+                report.IterationLogs.Add("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
+                report.IterationLogs.Add("  ║                        BEST CANDIDATE (Highest z-value)                       ║");
+                report.IterationLogs.Add("  ╠═══════════════════════════════════════════════════════════════════════════════╣");
+                report.IterationLogs.Add($" ║ Best z-value:            {report.BestCandidate.CurrentValue,7:F3}                                      ║");
+                report.IterationLogs.Add($" ║ Weight:                  {report.BestCandidate.CurrentWeight,7:F3}                                      ║");
+                report.IterationLogs.Add($" ║ Upper Bound:             {report.BestCandidate.UpperBound,7:F3}                                      ║");
+                report.IterationLogs.Add("  ║                                                                               ║");
+                report.IterationLogs.Add("  ║ Items in Best Candidate:                                                      ║");
+                
+                foreach (var itemIndex in report.BestCandidate.IncludedItems)
+                {
+                    var item = report.Items[itemIndex];
+                    report.IterationLogs.Add($"║   {item.Name}: Value={item.Value,7:F3}, Weight={item.Weight,7:F3}, Ratio={item.Ratio,7:F3}           ║");
+                }
+                report.IterationLogs.Add("╚═══════════════════════════════════════════════════════════════════════════════╝");
+            }
             
             if (report.BestSolution != null)
             {

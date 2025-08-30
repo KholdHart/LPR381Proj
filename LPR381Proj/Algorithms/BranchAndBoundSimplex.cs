@@ -47,6 +47,8 @@ namespace LinearProgrammingProject.Algorithms
             public List<BranchAndBoundNode> AllNodes { get; set; }
             public BranchAndBoundNode BestIntegerSolution { get; set; }
             public double BestIntegerValue { get; set; }
+            public List<BranchAndBoundNode> AllCandidates { get; set; }
+            public BranchAndBoundNode BestCandidate { get; set; }
             public int TotalNodes { get; set; }
             public int NodesExplored { get; set; }
             public int NodesFathomed { get; set; }
@@ -56,7 +58,8 @@ namespace LinearProgrammingProject.Algorithms
             public BranchAndBoundReport()
             {
                 AllNodes = new List<BranchAndBoundNode>();
-                BestIntegerValue = double.NegativeInfinity;
+                AllCandidates = new List<BranchAndBoundNode>();
+                BestIntegerValue = double.NegativeInfinity; // Will be updated based on problem type
                 IterationLogs = new List<string>();
             }
         }
@@ -72,6 +75,10 @@ namespace LinearProgrammingProject.Algorithms
         public BranchAndBoundReport Solve(LinearProgrammingModel originalModel)
         {
             var report = new BranchAndBoundReport();
+            bool isMaximization = originalModel.ObjectiveType == ObjectiveType.Maximize;
+            
+            // Initialize best value based on problem type
+            report.BestIntegerValue = isMaximization ? double.NegativeInfinity : double.PositiveInfinity;
             
             // Display canonical form
             report.CanonicalForm = GenerateCanonicalForm(originalModel);
@@ -124,7 +131,7 @@ namespace LinearProgrammingProject.Algorithms
                     }
 
                     // Check fathoming conditions
-                    if (ShouldFathomNode(currentNode, report.BestIntegerValue, report))
+                    if (ShouldFathomNode(currentNode, report.BestIntegerValue, report, isMaximization))
                     {
                         currentNode.IsFathomed = true;
                         report.NodesFathomed++;
@@ -132,16 +139,52 @@ namespace LinearProgrammingProject.Algorithms
                         continue;
                     }
 
+                    // Add to candidates list for z-value tracking
+                    report.AllCandidates.Add(currentNode);
+                    
+                    // Update best candidate based on z-value (highest for max, lowest for min)
+                    bool isBetterCandidate = false;
+                    if (report.BestCandidate == null)
+                    {
+                        isBetterCandidate = true;
+                    }
+                    else if (isMaximization && currentNode.ObjectiveValue > report.BestCandidate.ObjectiveValue)
+                    {
+                        isBetterCandidate = true;
+                    }
+                    else if (!isMaximization && currentNode.ObjectiveValue < report.BestCandidate.ObjectiveValue)
+                    {
+                        isBetterCandidate = true;
+                    }
+                    
+                    if (isBetterCandidate)
+                    {
+                        report.BestCandidate = currentNode;
+                        string candidateType = isMaximization ? "highest" : "lowest";
+                        report.IterationLogs.Add($"NEW BEST CANDIDATE ({candidateType} z-value): z = {currentNode.ObjectiveValue:F6}");
+                    }
+
                     // Check if solution is integer feasible
                     if (IsIntegerFeasible(currentNode, originalModel))
                     {
-                        // Found integer solution
-                        if (currentNode.ObjectiveValue > report.BestIntegerValue)
+                        // Found integer solution - check if it's better than current best
+                        bool isBetterInteger = false;
+                        if (isMaximization && currentNode.ObjectiveValue > report.BestIntegerValue)
+                        {
+                            isBetterInteger = true;
+                        }
+                        else if (!isMaximization && currentNode.ObjectiveValue < report.BestIntegerValue)
+                        {
+                            isBetterInteger = true;
+                        }
+                        
+                        if (isBetterInteger)
                         {
                             report.BestIntegerSolution = currentNode;
                             report.BestIntegerValue = currentNode.ObjectiveValue;
-                            report.IterationLogs.Add($"NEW BEST INTEGER SOLUTION FOUND!");
-                            report.IterationLogs.Add($"Objective Value: {currentNode.ObjectiveValue:F6}");
+                            string solutionType = isMaximization ? "maximum" : "minimum";
+                            report.IterationLogs.Add($"NEW BEST INTEGER SOLUTION FOUND! ({solutionType} z-value)");
+                            report.IterationLogs.Add($"Objective Value (z): {currentNode.ObjectiveValue:F6}");
                             report.IterationLogs.Add("Solution:");
                             foreach (var kvp in currentNode.Solution)
                             {
@@ -185,11 +228,26 @@ namespace LinearProgrammingProject.Algorithms
             report.IterationLogs.Add($"Total nodes created: {report.TotalNodes}");
             report.IterationLogs.Add($"Nodes explored: {report.NodesExplored}");
             report.IterationLogs.Add($"Nodes fathomed: {report.NodesFathomed}");
+            report.IterationLogs.Add($"Total candidates evaluated: {report.AllCandidates.Count}");
+            
+            // Display best candidate (highest z-value for max, lowest for min)
+            if (report.BestCandidate != null)
+            {
+                string candidateType = isMaximization ? "Highest" : "Lowest";
+                report.IterationLogs.Add($"\nBEST CANDIDATE ({candidateType} z-value):");
+                report.IterationLogs.Add($"Objective Value (z): {report.BestCandidate.ObjectiveValue:F6}");
+                report.IterationLogs.Add("Variables:");
+                foreach (var kvp in report.BestCandidate.Solution)
+                {
+                    report.IterationLogs.Add($"  {kvp.Key} = {kvp.Value:F6}");
+                }
+                report.IterationLogs.Add($"Integer Feasible: {IsIntegerFeasible(report.BestCandidate, originalModel)}");
+            }
             
             if (report.BestIntegerSolution != null)
             {
                 report.IterationLogs.Add($"\nBEST INTEGER SOLUTION:");
-                report.IterationLogs.Add($"Objective Value: {report.BestIntegerValue:F6}");
+                report.IterationLogs.Add($"Objective Value (z): {report.BestIntegerValue:F6}");
                 report.IterationLogs.Add("Variables:");
                 foreach (var kvp in report.BestIntegerSolution.Solution)
                 {
@@ -253,7 +311,7 @@ namespace LinearProgrammingProject.Algorithms
             
             return rootNode;
         } 
-       private bool ShouldFathomNode(BranchAndBoundNode node, double bestIntegerValue, BranchAndBoundReport report)
+       private bool ShouldFathomNode(BranchAndBoundNode node, double bestIntegerValue, BranchAndBoundReport report, bool isMaximization = true)
         {
             // Fathom by infeasibility
             if (node.Status == SolutionStatus.Infeasible)
@@ -269,11 +327,19 @@ namespace LinearProgrammingProject.Algorithms
                 return true;
             }
             
-            // Fathom by bound (for maximization problems)
-            if (node.Status == SolutionStatus.Optimal && node.ObjectiveValue <= bestIntegerValue + _tolerance)
+            // Fathom by bound - different logic for max vs min problems
+            if (node.Status == SolutionStatus.Optimal)
             {
-                node.FathomReason = $"Bound: {node.ObjectiveValue:F6} ≤ {bestIntegerValue:F6}";
-                return true;
+                if (isMaximization && bestIntegerValue != double.NegativeInfinity && node.ObjectiveValue <= bestIntegerValue + _tolerance)
+                {
+                    node.FathomReason = $"Bound: {node.ObjectiveValue:F6} ≤ {bestIntegerValue:F6}";
+                    return true;
+                }
+                else if (!isMaximization && bestIntegerValue != double.PositiveInfinity && node.ObjectiveValue >= bestIntegerValue - _tolerance)
+                {
+                    node.FathomReason = $"Bound: {node.ObjectiveValue:F6} ≥ {bestIntegerValue:F6}";
+                    return true;
+                }
             }
             
             return false;
