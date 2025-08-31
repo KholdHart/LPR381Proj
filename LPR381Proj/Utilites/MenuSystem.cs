@@ -6,6 +6,7 @@ using LinearProgrammingProject.IO;
 using LinearProgrammingProject.Utilities;
 using LinearProgrammingProject.Algorithms;
 using LinearProgrammingProject.Solver;
+using LinearProgrammingProject.SensitivityAnalysis;
 
 namespace LinearProgrammingProject.Utilities
 {
@@ -17,12 +18,12 @@ namespace LinearProgrammingProject.Utilities
         public void Run()
         {
             ShowWelcomeScreen();
-            
+
             while (true)
             {
                 DisplayMainMenu();
                 int choice = GetChoice(1, 5);
-                
+
                 Console.Clear();
                 switch (choice)
                 {
@@ -51,7 +52,7 @@ namespace LinearProgrammingProject.Utilities
             Console.ForegroundColor = ConsoleColor.Cyan;
             DrawBox("LP/IP OPTIMIZATION SOLVER", "Advanced Mathematical Programming Suite");
             Console.ResetColor();
-            
+
             Console.WriteLine("\n" + CenterText("Supported Algorithms:"));
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(CenterText("• Primal Simplex Method"));
@@ -60,7 +61,7 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine(CenterText("• Cutting Plane Method"));
             Console.WriteLine(CenterText("• Knapsack Branch & Bound"));
             Console.ResetColor();
-            
+
             Console.WriteLine("\n" + CenterText("Press any key to continue..."));
             Console.ReadKey();
         }
@@ -68,17 +69,17 @@ namespace LinearProgrammingProject.Utilities
         private void DisplayMainMenu()
         {
             Console.Clear();
-            
+
             // Header
             Console.ForegroundColor = ConsoleColor.Green;
             DrawSeparator('═');
             Console.WriteLine(CenterText("MAIN MENU"));
             DrawSeparator('═');
             Console.ResetColor();
-            
+
             // Model status
             DisplayModelStatus();
-            
+
             // Menu options
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.White;
@@ -94,7 +95,7 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
-            
+
             Console.WriteLine();
             Console.Write("  Please select an option (1-5): ");
         }
@@ -135,7 +136,7 @@ namespace LinearProgrammingProject.Utilities
             Console.ForegroundColor = ConsoleColor.Cyan;
             DrawBox("THANK YOU", "Thank you for using the LP/IP Solver!");
             Console.ResetColor();
-            
+
             Console.WriteLine("\n" + CenterText("Session completed successfully."));
             Console.WriteLine(CenterText("Press any key to exit..."));
             Console.ReadKey();
@@ -148,10 +149,10 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine(CenterText("LOAD MODEL"));
             DrawSeparator('═');
             Console.ResetColor();
-            
+
             Console.WriteLine("\n  Available sample files:");
             Console.ForegroundColor = ConsoleColor.Cyan;
-            
+
             Console.WriteLine("  • universal_lp.txt      - Linear programming model");
             Console.WriteLine("  • universal_ip.txt      - Integer programming model");
             Console.WriteLine("  • universal_binary.txt  - Binary programming model");
@@ -159,25 +160,25 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("  • knapsack_medium.txt   - Medium knapsack problem");
             Console.WriteLine("  • example_format.txt    - Example from specification");
             Console.ResetColor();
-            
+
             Console.WriteLine("\n  Enter the file path (or just filename for samples):");
             Console.Write("  File: ");
             string path = Console.ReadLine();
-            
+
             if (string.IsNullOrWhiteSpace(path))
             {
                 ShowError("File path cannot be empty!");
                 Wait();
                 return;
             }
-            
+
             Console.WriteLine("\n  Loading model...");
-            
+
             try
             {
                 var reader = new InputReader(path);
                 _model = reader.ReadModel();
-                
+
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  SUCCESS!");
                 Console.WriteLine("   ┌───────────────────────────────────────────────────────────────────────────────────┐");
@@ -189,33 +190,33 @@ namespace LinearProgrammingProject.Utilities
             {
                 ShowError($"Failed to load model: {ex.Message}");
             }
-            
+
             Wait();
         }
 
         private void SolveModel()
         {
-            if (_model == null) 
-            { 
+            if (_model == null)
+            {
                 ShowError("No model loaded! Please load a model first.");
-                Wait(); 
-                return; 
+                Wait();
+                return;
             }
-            
+
             Console.ForegroundColor = ConsoleColor.Yellow;
             DrawSeparator('═');
             Console.WriteLine(CenterText("ALGORITHM SELECTION"));
             DrawSeparator('═');
             Console.ResetColor();
-            
+
             DisplayAlgorithmMenu();
             int alg = GetChoice(1, 5);
-            
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\n  STARTING OPTIMIZATION PROCESS");
             DrawSeparator('─');
             Console.ResetColor();
-            
+
             try
             {
                 if (alg == 1)
@@ -223,16 +224,16 @@ namespace LinearProgrammingProject.Utilities
                     // Primal Simplex
                     var solver = new PrimalSimplexSolver();
                     var result = solver.Solve(_model);
-                    
+
                     // Display canonical form
                     Console.WriteLine(result.CanonicalForm);
-                    
+
                     Console.WriteLine("\n=== PRIMAL SIMPLEX TABLEAU ITERATIONS ===");
                     foreach (var snapshot in result.IterationSnapshots)
                     {
                         Console.WriteLine(snapshot);
                     }
-                    
+
                     if (result.Pivots.Count > 0)
                     {
                         Console.WriteLine("\nPivot Operations Summary:");
@@ -241,7 +242,7 @@ namespace LinearProgrammingProject.Utilities
                             Console.WriteLine($"  {pivot}");
                         }
                     }
-                    
+
                     Console.WriteLine("\n=== FINAL SOLUTION ===");
                     Console.WriteLine($"Status: {_model.Status}");
                     if (_model.Status == SolutionStatus.Optimal)
@@ -257,7 +258,7 @@ namespace LinearProgrammingProject.Utilities
                     {
                         Console.WriteLine("The problem is unbounded.");
                     }
-                    
+
                     // Save Primal Simplex results to output file with canonical form and all iterations
                     WritePrimalSimplexOutput(result, "output.txt");
                 }
@@ -270,22 +271,22 @@ namespace LinearProgrammingProject.Utilities
                         Wait();
                         return;
                     }
-                    
+
                     var bnbSolver = new BranchAndBoundSimplex();
                     var bnbResult = bnbSolver.Solve(_model);
-                    
+
                     // Display canonical form
                     Console.WriteLine(bnbResult.CanonicalForm);
-                    
+
                     // Display all iteration logs
                     foreach (var log in bnbResult.IterationLogs)
                     {
                         Console.WriteLine(log);
                     }
-                    
+
                     // Display branch and bound tree
                     bnbSolver.DisplayBranchAndBoundTree(bnbResult);
-                    
+
                     // Update model with best solution
                     if (bnbResult.BestIntegerSolution != null)
                     {
@@ -297,7 +298,7 @@ namespace LinearProgrammingProject.Utilities
                     {
                         _model.Status = SolutionStatus.Infeasible;
                     }
-                    
+
                     // Save Branch & Bound results to output file with canonical form and all iterations
                     WriteBranchAndBoundOutput(bnbResult, "output.txt");
                 }
@@ -307,7 +308,7 @@ namespace LinearProgrammingProject.Utilities
                     if (!_model.IsBinaryProgram())
                     {
                         Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
-                        Console.WriteLine("║                                    ERROR                                      ║");
+                        Console.WriteLine("║                                    ERROR                                    ║");
                         Console.WriteLine("║                                                                               ║");
                         Console.WriteLine("║  Knapsack algorithm requires ALL variables to be binary (bin)!                ║");
                         Console.WriteLine("║  Please load a knapsack model file (e.g., knapsack_small.txt)                 ║");
@@ -315,56 +316,54 @@ namespace LinearProgrammingProject.Utilities
                         Wait();
                         return;
                     }
-                    
+
                     Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
-                    Console.WriteLine("║                      STARTING KNAPSACK BRANCH & BOUND                         ║");
+                    Console.WriteLine("║                      STARTING KNAPSACK BRANCH & BOUND                       ║");
                     Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     Console.WriteLine("Processing...\n");
-                    
+
                     var knapsackSolver = new KnapsackBranchAndBound();
                     var knapsackResult = knapsackSolver.Solve(_model);
-                    
+
                     // Display all iteration logs (includes canonical form and all table iterations)
                     foreach (var log in knapsackResult.IterationLogs)
                     {
                         Console.WriteLine(log);
                     }
-                    
+
                     // Display branch and bound tree
                     knapsackSolver.DisplayBranchAndBoundTree(knapsackResult);
-                    
+
                     // Show backtracking process
                     knapsackSolver.DisplayBacktrackingProcess(knapsackResult);
-                    
 
-                    
                     // Update model with best solution
                     if (knapsackResult.BestSolution != null)
                     {
                         _model.OptimalValue = knapsackResult.BestValue;
                         _model.OptimalSolution = new Dictionary<string, double>();
-                        
+
                         // Set all variables to 0 first
                         for (int i = 0; i < _model.Variables.Count; i++)
                         {
                             _model.Variables[i].Value = 0;
                             _model.OptimalSolution[_model.Variables[i].Name] = 0;
                         }
-                        
+
                         // Set included items to 1
                         foreach (var itemIndex in knapsackResult.BestSolution.IncludedItems)
                         {
                             _model.Variables[itemIndex].Value = 1;
                             _model.OptimalSolution[_model.Variables[itemIndex].Name] = 1;
                         }
-                        
+
                         _model.Status = SolutionStatus.Optimal;
                     }
                     else
                     {
                         _model.Status = SolutionStatus.Infeasible;
                     }
-                    
+
                     // Write knapsack-specific output
                     WriteKnapsackOutput(knapsackResult, "output.txt");
                 }
@@ -374,7 +373,7 @@ namespace LinearProgrammingProject.Utilities
                     Wait();
                     return;
                 }
-                
+
                 // Show completion message for all algorithms
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  OPTIMIZATION COMPLETE");
@@ -398,15 +397,15 @@ namespace LinearProgrammingProject.Utilities
                 Console.WriteLine("  │ • Ensure the model is feasible                                              │");
                 Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
                 Console.ResetColor();
-                
+
                 Console.ForegroundColor = ConsoleColor.DarkGray;
                 Console.WriteLine($"\n  Debug information: {ex.StackTrace}");
                 Console.ResetColor();
             }
-            
+
             Wait();
         }
-        
+
         private string GetAlgorithmName(int algorithmNumber)
         {
             switch (algorithmNumber)
@@ -427,9 +426,9 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine(CenterText("OUTPUT FILE VIEWER"));
             DrawSeparator('═');
             Console.ResetColor();
-            
+
             string outputPath = "output.txt";
-            
+
             try
             {
                 if (!System.IO.File.Exists(outputPath))
@@ -445,9 +444,9 @@ namespace LinearProgrammingProject.Utilities
                     Wait();
                     return;
                 }
-                
+
                 string content = System.IO.File.ReadAllText(outputPath);
-                
+
                 if (string.IsNullOrWhiteSpace(content))
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -461,20 +460,20 @@ namespace LinearProgrammingProject.Utilities
                     Wait();
                     return;
                 }
-                
+
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
                 Console.WriteLine($"   │ Displaying contents of: {outputPath,-52}                                    │");
                 Console.WriteLine("    └─────────────────────────────────────────────────────────────────────────────┘");
                 Console.ResetColor();
-                
+
                 Console.WriteLine();
                 DrawSeparator('─');
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine(content);
                 Console.ResetColor();
                 DrawSeparator('─');
-                
+
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"\n  File size: {new System.IO.FileInfo(outputPath).Length} bytes");
                 Console.WriteLine($"  Last modified: {System.IO.File.GetLastWriteTime(outputPath):yyyy-MM-dd HH:mm:ss}");
@@ -484,7 +483,7 @@ namespace LinearProgrammingProject.Utilities
             {
                 ShowError($"Failed to read output file: {ex.Message}");
             }
-            
+
             Wait();
         }
 
@@ -495,30 +494,55 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine(CenterText("SENSITIVITY ANALYSIS"));
             DrawSeparator('═');
             Console.ResetColor();
-            
+
             if (_model == null)
             {
-                ShowError("No model loaded! Please load and solve a model first.");
+                ShowError("No model loaded! Please load a model first.");
                 Wait();
                 return;
             }
-            
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("\n  FEATURE STATUS");
+
+            if (_model.Status != SolutionStatus.Optimal)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine("  │ WARNING: Model has not been solved or does not have an optimal solution.    │");
+                Console.WriteLine("  │                                                                             │");
+                Console.WriteLine("  │ For accurate sensitivity analysis, please solve the model first.            │");
+                Console.WriteLine("  │ Some features may not work correctly without an optimal solution.           │");
+                Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+                Console.ResetColor();
+                Console.Write("\n  Do you want to continue anyway? (y/n): ");
+                string proceed = Console.ReadLine();
+                if (proceed?.ToLower() != "y")
+                {
+                    return;
+                }
+            }
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\n  STARTING SENSITIVITY ANALYSIS");
             Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
-            Console.WriteLine("  │ Sensitivity Analysis is currently under development.                        │");
-            Console.WriteLine("  │                                                                             │");
-            Console.WriteLine("  │ This feature will provide:                                                  │");
-            Console.WriteLine("  │ • Shadow prices for constraints                                             │");
-            Console.WriteLine("  │ • Reduced costs for variables                                               │");
-            Console.WriteLine("  │ • Allowable ranges for objective coefficients                               │");
-            Console.WriteLine("  │ • Right-hand-side ranging analysis                                          │");
-            Console.WriteLine("  │                                                                             │");
-            Console.WriteLine("  │ Please check back in future updates!                                        │");
+            Console.WriteLine("  │ Available Features:                                                         │");
+            Console.WriteLine("  │ • Shadow prices (approximate)                                               │");
+            Console.WriteLine("  │ • Right-hand-side modification                                              │");
+            Console.WriteLine("  │ • Dual problem formulation                                                  │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
-            
+
+            Console.WriteLine("\n  Launching sensitivity analysis module...");
             Wait();
+
+            try
+            {
+                var sensitivityEngine = new SensitivityEngine(_model);
+                sensitivityEngine.Run();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Sensitivity analysis failed: {ex.Message}");
+                Wait();
+            }
         }
 
         private int GetChoice(int min, int max)
@@ -527,12 +551,12 @@ namespace LinearProgrammingProject.Utilities
             while (true)
             {
                 string input = Console.ReadLine();
-                
+
                 if (int.TryParse(input, out choice) && choice >= min && choice <= max)
                 {
                     return choice;
                 }
-                
+
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.Write($"  Invalid input! Please enter a number between {min} and {max}: ");
                 Console.ResetColor();
@@ -550,7 +574,7 @@ namespace LinearProgrammingProject.Utilities
                     writer.WriteLine("║                     All decimal values rounded to 3 points                    ║");
                     writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     writer.WriteLine();
-                    
+
                     // Write canonical form
                     writer.WriteLine("CANONICAL FORM");
                     writer.WriteLine(new string('=', 60));
@@ -564,7 +588,7 @@ namespace LinearProgrammingProject.Utilities
                         }
                     }
                     writer.WriteLine();
-                    
+
                     // Write all tableau iterations
                     writer.WriteLine("TABLEAU ITERATIONS");
                     writer.WriteLine(new string('=', 60));
@@ -574,19 +598,19 @@ namespace LinearProgrammingProject.Utilities
                         writer.WriteLine(log);
                     }
                     writer.WriteLine();
-                    
+
                     // Write final solution
                     writer.WriteLine("FINAL SOLUTION");
                     writer.WriteLine(new string('=', 60));
                     writer.WriteLine($"Algorithm: Branch & Bound Knapsack");
                     writer.WriteLine($"Total Iterations: {result.IterationLogs.Count}");
                     writer.WriteLine($"Status: {(_model.Status == SolutionStatus.Optimal ? "Optimal" : _model.Status.ToString())}");
-                    
+
                     if (result.BestSolution != null)
                     {
                         writer.WriteLine($"Optimal Value: {result.BestValue:F3}");
                         writer.WriteLine("Variable Values:");
-                        
+
                         // Write variable assignments in the same format as other algorithms
                         for (int i = 0; i < result.Items.Count; i++)
                         {
@@ -618,13 +642,13 @@ namespace LinearProgrammingProject.Utilities
                     writer.WriteLine("║                     All decimal values rounded to 3 points                    ║");
                     writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     writer.WriteLine();
-                    
+
                     // Write canonical form
                     writer.WriteLine("CANONICAL FORM");
                     writer.WriteLine(new string('=', 60));
                     writer.WriteLine(result.CanonicalForm);
                     writer.WriteLine();
-                    
+
                     // Write all tableau iterations
                     writer.WriteLine("TABLEAU ITERATIONS");
                     writer.WriteLine(new string('=', 60));
@@ -633,7 +657,7 @@ namespace LinearProgrammingProject.Utilities
                         writer.WriteLine(snapshot);
                         writer.WriteLine();
                     }
-                    
+
                     // Write pivot operations summary
                     if (result.Pivots.Count > 0)
                     {
@@ -645,14 +669,14 @@ namespace LinearProgrammingProject.Utilities
                         }
                         writer.WriteLine();
                     }
-                    
+
                     // Write final solution
                     writer.WriteLine("FINAL SOLUTION");
                     writer.WriteLine(new string('=', 60));
                     writer.WriteLine($"Algorithm: Primal Simplex");
                     writer.WriteLine($"Iterations: {result.IterationSnapshots.Count}");
                     writer.WriteLine($"Status: {_model.Status}");
-                    
+
                     if (_model.Status == SolutionStatus.Optimal)
                     {
                         writer.WriteLine($"Optimal Value: {_model.OptimalValue:F3}");
@@ -689,13 +713,13 @@ namespace LinearProgrammingProject.Utilities
                     writer.WriteLine("║                     All decimal values rounded to 3 points                    ║");
                     writer.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
                     writer.WriteLine();
-                    
+
                     // Write canonical form
                     writer.WriteLine("CANONICAL FORM");
                     writer.WriteLine(new string('=', 60));
                     writer.WriteLine(result.CanonicalForm);
                     writer.WriteLine();
-                    
+
                     // Write all iteration logs (includes all tableau iterations)
                     writer.WriteLine("BRANCH & BOUND ITERATIONS");
                     writer.WriteLine(new string('=', 60));
@@ -704,14 +728,14 @@ namespace LinearProgrammingProject.Utilities
                         writer.WriteLine(log);
                         writer.WriteLine();
                     }
-                    
+
                     // Write final solution
                     writer.WriteLine("FINAL SOLUTION");
                     writer.WriteLine(new string('=', 60));
                     writer.WriteLine($"Algorithm: Branch & Bound Simplex");
-                    writer.WriteLine($"Total Iterations: {result.IterationLogs.Count}");
+                    writer.WriteLine($"Iterations: {result.IterationLogs.Count}");
                     writer.WriteLine($"Status: {_model.Status}");
-                    
+
                     if (_model.Status == SolutionStatus.Optimal && result.BestIntegerSolution != null)
                     {
                         writer.WriteLine($"Optimal Value: {result.BestIntegerValue:F3}");
@@ -743,15 +767,15 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("  │                           AVAILABLE ALGORITHMS                              │");
             Console.WriteLine("  ├─────────────────────────────────────────────────────────────────────────────┤");
             Console.WriteLine("  │                                                                             │");
-            
+
             // Show algorithm compatibility
             string modelType = GetModelType();
-            
+
             Console.WriteLine($"  │  Current Model Type: {modelType,-25}                              │");
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  │   1.  Primal Simplex                                                        │");
             Console.WriteLine("  │   2.  Revised Primal Simplex                                                │");
-            
+
             if (_model.IsIntegerProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -761,12 +785,12 @@ namespace LinearProgrammingProject.Utilities
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("  │   3. Branch & Bound Simplex                                                  │");
+                Console.WriteLine("  │   3. Branch & Bound Simplex                                                 │");
                 Console.ResetColor();
             }
-            
-                Console.WriteLine("  │   4. Cutting Plane                                                          │");
-            
+
+            Console.WriteLine("  │   4. Cutting Plane                                                          │");
+
             if (_model.IsBinaryProgram())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -779,10 +803,10 @@ namespace LinearProgrammingProject.Utilities
                 Console.WriteLine("  │   5. Branch & Bound Knapsack                                                │");
                 Console.ResetColor();
             }
-            
+
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
-            
+
             Console.WriteLine("\n  Select algorithm (1-5): ");
         }
 
@@ -832,7 +856,7 @@ namespace LinearProgrammingProject.Utilities
                 // Truncate if too long
                 text = text.Substring(0, availableWidth - 3) + "...";
             }
-            
+
             int padding = (availableWidth - text.Length) / 2;
             int rightPadding = availableWidth - text.Length - padding;
             return new string(' ', padding) + text + new string(' ', rightPadding);
