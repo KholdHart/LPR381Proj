@@ -1,0 +1,10 @@
+Max
+3 x1 + 2 x2
+Subject To
+2 x1 + 1 x2 <= 100
+1 x1 + 1 x2 <= 80
+1 x1 + 0 x2 <= 40
+Bounds
+x1 >= 0
+x2 >= 0
+End

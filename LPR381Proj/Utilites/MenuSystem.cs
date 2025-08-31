@@ -22,7 +22,7 @@ namespace LinearProgrammingProject.Utilities
             while (true)
             {
                 DisplayMainMenu();
-                int choice = GetChoice(1, 5);
+                int choice = GetChoice(1, 6);
 
                 Console.Clear();
                 switch (choice)
@@ -40,6 +40,9 @@ namespace LinearProgrammingProject.Utilities
                         ViewOutputFile();
                         break;
                     case 5:
+                        RunSensitivityAnalysisTests();
+                        break;
+                    case 6:
                         ShowExitMessage();
                         return;
                 }
@@ -91,7 +94,8 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("  │  2. Solve Model                                                             │");
             Console.WriteLine("  │  3. Sensitivity Analysis                                                    │");
             Console.WriteLine("  │  4. View Output File                                                        │");
-            Console.WriteLine("  │  5. Exit                                                                    │");
+            Console.WriteLine("  │  5. Run Sensitivity Analysis Tests                                          │");
+            Console.WriteLine("  │  6. Exit                                                                    │");
             Console.WriteLine("  │                                                                             │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
@@ -495,9 +499,67 @@ namespace LinearProgrammingProject.Utilities
             DrawSeparator('═');
             Console.ResetColor();
 
+            Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+            Console.WriteLine("  │                          SENSITIVITY ANALYSIS OPTIONS                       │");
+            Console.WriteLine("  ├─────────────────────────────────────────────────────────────────────────────┤");
+            Console.WriteLine("  │  1. Load and solve the specific sensitivity analysis problem               │");
+            Console.WriteLine("  │  2. Perform sensitivity analysis on current loaded model                   │");
+            Console.WriteLine("  │  0. Return to main menu                                                     │");
+            Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+            Console.Write("\n  Select option (0-2): ");
+
+            int choice = GetChoice(0, 2);
+
+            switch (choice)
+            {
+                case 1:
+                    SolveSensitivityAnalysisProblem();
+                    break;
+                case 2:
+                    PerformSensitivityAnalysisOnCurrentModel();
+                    break;
+                case 0:
+                    return;
+            }
+        }
+
+        private void SolveSensitivityAnalysisProblem()
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    SENSITIVITY ANALYSIS PROBLEM SOLVER                        ║");
+            Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
+
+            try
+            {
+                var problemSolver = new SensitivityProblemSolver();
+                var solution = problemSolver.SolveWithSensitivityAnalysis();
+                
+                // Display the solution
+                problemSolver.DisplaySolution(solution);
+                
+                // Update the current model with the solved problem
+                _model = problemSolver.GetModel();
+                
+                // Launch sensitivity analysis on the solved problem
+                Console.Clear();
+                var sensitivityEngine = new SensitivityEngine(_model);
+                sensitivityEngine.Run();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Failed to solve sensitivity analysis problem: {ex.Message}");
+                Wait();
+            }
+        }
+
+        private void PerformSensitivityAnalysisOnCurrentModel()
+        {
             if (_model == null)
             {
-                ShowError("No model loaded! Please load a model first.");
+                ShowError("No model loaded! Please load a model first or use option 1 to solve the specific problem.");
                 Wait();
                 return;
             }
@@ -524,9 +586,12 @@ namespace LinearProgrammingProject.Utilities
             Console.WriteLine("\n  STARTING SENSITIVITY ANALYSIS");
             Console.WriteLine("  ┌─────────────────────────────────────────────────────────────────────────────┐");
             Console.WriteLine("  │ Available Features:                                                         │");
-            Console.WriteLine("  │ • Shadow prices (approximate)                                               │");
-            Console.WriteLine("  │ • Right-hand-side modification                                              │");
-            Console.WriteLine("  │ • Dual problem formulation                                                  │");
+            Console.WriteLine("  │ • Non-basic and basic variable range analysis                              │");
+            Console.WriteLine("  │ • Right-hand-side sensitivity analysis                                     │");
+            Console.WriteLine("  │ • Shadow prices and reduced costs                                          │");
+            Console.WriteLine("  │ • Dual problem formulation and solution                                    │");
+            Console.WriteLine("  │ • Adding new activities and constraints                                     │");
+            Console.WriteLine("  │ • Duality verification (strong/weak)                                       │");
             Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
             Console.ResetColor();
 
@@ -543,6 +608,53 @@ namespace LinearProgrammingProject.Utilities
                 ShowError($"Sensitivity analysis failed: {ex.Message}");
                 Wait();
             }
+        }
+
+        private void RunSensitivityAnalysisTests()
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                        SENSITIVITY ANALYSIS TESTS                             ║");
+            Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
+
+            Console.WriteLine("\n  ┌─────────────────────────────────────────────────────────────────────────────┐");
+            Console.WriteLine("  │                              TEST OPTIONS                                   │");
+            Console.WriteLine("  ├─────────────────────────────────────────────────────────────────────────────┤");
+            Console.WriteLine("  │  1. Run comprehensive functionality tests                                  │");
+            Console.WriteLine("  │  2. Demonstrate sensitivity analysis features                               │");
+            Console.WriteLine("  │  3. Run interactive demonstration                                           │");
+            Console.WriteLine("  │  4. Verify all required operations are implemented                          │");
+            Console.WriteLine("  │  5. Display quick start guide                                               │");
+            Console.WriteLine("  │  0. Return to main menu                                                     │");
+            Console.WriteLine("  └─────────────────────────────────────────────────────────────────────────────┘");
+            Console.Write("\n  Select option (0-2): ");
+
+            int choice = GetChoice(0, 5);
+
+            switch (choice)
+            {
+                case 1:
+                    FunctionalityTest.RunComprehensiveTest();
+                    break;
+                case 2:
+                    SensitivityAnalysisTests.DemonstrateFeatures();
+                    break;
+                case 3:
+                    DemoScript.RunDemo();
+                    break;
+                case 4:
+                    OperationsVerification.VerifyAllOperations();
+                    break;
+                case 5:
+                    MenuVerification.DisplayQuickStartGuide();
+                    break;
+                case 0:
+                    return;
+            }
+
+            Wait();
         }
 
         private int GetChoice(int min, int max)
