@@ -1,0 +1,190 @@
+=== ESSENTIAL LINEAR PROGRAMMING MODELS ===
+Streamlined collection for ALL Algorithms: Primal Simplex & Branch & Bound
+
+=== ALGORITHM COMPATIBILITY ===
+
+✅ PRIMAL SIMPLEX (Algorithm 1):
+   - Requires: Continuous variables (+ +)
+   - Requires: ≤ constraints only
+   - Requires: Non-negative RHS
+   - Supports: Maximization and Minimization
+
+✅ BRANCH & BOUND SIMPLEX (Algorithm 3):
+   - Requires: Integer (int) or Binary (bin) variables
+   - Requires: ≤ constraints only
+   - Requires: Non-negative RHS
+   - Supports: Maximization and Minimization
+
+✅ KNAPSACK BRANCH & BOUND (Algorithm 5):
+   - Requires: Binary (bin) variables only
+   - Requires: Single ≤ constraint (capacity)
+   - Requires: Non-negative RHS
+   - Supports: Maximization only
+
+=== ESSENTIAL MODEL FILES (CLEANED UP) ===
+
+📁 PRIMAL SIMPLEX FILES:
+   • universal_lp.txt     - Basic continuous LP problem
+   • model.txt           - Standard continuous LP (existing)
+
+📁 BRANCH & BOUND FILES:
+   • universal_ip.txt     - Basic integer programming
+   • universal_binary.txt - Binary programming (0-1 variables)
+   • knapsack_small.txt   - Small knapsack problem (3 items)
+   • knapsack_medium.txt  - Medium knapsack problem (4 items)
+
+=== ESSENTIAL MODEL SPECIFICATIONS ===
+
+MODEL 1: universal_lp.txt (PRIMAL SIMPLEX)
+max 3 2
+1 2 <= 10
+2 1 <= 8
+1 1 <= 6
++ +
+→ Basic continuous LP for Algorithm 1 (Primal Simplex)
+
+MODEL 2: model.txt (PRIMAL SIMPLEX - EXISTING)
+max -60 -30 -20
+8 6 1 <= 48
+4 2 1.5 <= 20
+2 1.5 0.5 <= 8
++ + +
+→ Standard 3-variable continuous LP
+
+MODEL 3: universal_ip.txt (BRANCH & BOUND)
+max 3 2
+1 2 <= 10
+2 1 <= 8
+1 1 <= 6
+int int
+→ Basic integer programming for Algorithm 3 (Branch & Bound)
+
+MODEL 4: universal_binary.txt (BRANCH & BOUND)
+max 5 8 3
+2 3 1 <= 6
+1 2 2 <= 5
+3 1 2 <= 7
+bin bin bin
+→ Binary programming (0-1 variables) for Algorithm 3
+
+MODEL 5: knapsack_small.txt (KNAPSACK BRANCH & BOUND)
+max 60 100 120
+10 20 30 <= 50
+bin bin bin
+→ Small knapsack: 3 items, capacity 50
+  Item 1: value=60, weight=10, ratio=6.0
+  Item 2: value=100, weight=20, ratio=5.0  
+  Item 3: value=120, weight=30, ratio=4.0
+  Optimal: Items 1&2, Value=160, Weight=30
+
+MODEL 6: knapsack_medium.txt (KNAPSACK BRANCH & BOUND)
+max 10 20 30 40
+2 3 4 5 <= 8
+bin bin bin bin
+→ Medium knapsack: 4 items, capacity 8
+  Item 1: value=10, weight=2, ratio=5.0
+  Item 2: value=20, weight=3, ratio=6.67
+  Item 3: value=30, weight=4, ratio=7.5
+  Item 4: value=40, weight=5, ratio=8.0
+  Optimal: Items 1&4, Value=50, Weight=7
+
+=== QUICK START GUIDE ===
+
+🚀 TESTING INSTRUCTIONS:
+
+1. Run Program:
+   .\bin\Debug\LPR381Proj.exe
+
+2. Test Primal Simplex:
+   - Load Model: Choose 1, Enter "universal_lp.txt"
+   - Solve Model: Choose 2, then 1 (Primal Simplex)
+
+3. Test Branch & Bound:
+   - Load Model: Choose 1, Enter "universal_ip.txt"
+   - Solve Model: Choose 2, then 3 (Branch & Bound)
+
+4. Test Knapsack Branch & Bound:
+   - Load Model: Choose 1, Enter "knapsack_small.txt"
+   - Solve Model: Choose 2, then 5 (Branch & Bound Knapsack)
+
+✅ ALGORITHM COMPATIBILITY MATRIX:
+
+File Name              | Primal Simplex | Branch & Bound | Knapsack B&B
+-----------------------|----------------|----------------|-------------
+universal_lp.txt       |       ✅       |       ❌       |      ❌
+model.txt              |       ✅       |       ❌       |      ❌
+universal_ip.txt       |       ❌       |       ✅       |      ❌
+universal_binary.txt   |       ❌       |       ✅       |      ❌
+knapsack_small.txt     |       ❌       |       ❌       |      ✅
+knapsack_medium.txt    |       ❌       |       ❌       |      ✅
+
+=== EXPECTED OUTPUTS ===
+
+PRIMAL SIMPLEX:
+✅ Canonical form with slack variables
+✅ All tableau iterations (formatted tables)
+✅ Pivot operations summary
+✅ Final optimal solution
+
+BRANCH & BOUND:
+✅ Canonical form display
+✅ Branch & bound tree exploration
+✅ Node-by-node simplex iterations
+✅ Fathoming decisions and reasons
+✅ Best integer solution found
+
+KNAPSACK BRANCH & BOUND:
+✅ Canonical knapsack form display
+✅ Items sorted by value/weight ratio
+✅ Complete branch & bound tree exploration
+✅ All node table iterations with item decisions
+✅ Fathoming by bound and infeasibility
+✅ Best knapsack solution with included items
+
+=== FILE FORMAT ===
+Line 1: max/min [objective coefficients]
+Lines 2-n: [constraint coefficients] <= [RHS]
+Last line: [variable types: +, int, bin]
+
+=== KNAPSACK PROBLEM FORMAT ===
+KNAPSACK PROBLEMS have a specific structure:
+• Line 1: max [item values] (maximization only)
+• Line 2: [item weights] <= [capacity] (single constraint)
+• Line 3: bin bin bin... (all binary variables)
+
+EXAMPLE INTERPRETATION:
+max 60 100 120        ← Item values: v₁=60, v₂=100, v₃=120
+10 20 30 <= 50        ← Item weights: w₁=10, w₂=20, w₃=30, Capacity=50
+bin bin bin           ← All variables are binary (0 or 1)
+
+KNAPSACK OBJECTIVE: Select items to maximize total value while staying within weight capacity.
+
+ALGORITHM 5 FEATURES:
+✅ Sorts items by value/weight ratio automatically
+✅ Uses fractional upper bound for fathoming
+✅ Displays complete branching tree with include/exclude decisions
+✅ Shows table iterations for each node with cumulative values/weights
+✅ Identifies optimal item combination
+
+=== TESTING THE KNAPSACK IMPLEMENTATION ===
+
+STEP-BY-STEP TEST:
+1. Build: dotnet build
+2. Run: .\bin\Debug\LPR381Proj.exe
+3. Load Model: Choose 1, Enter "knapsack_small.txt"
+4. Solve Model: Choose 2, Choose 5 (Branch & Bound Knapsack)
+
+EXPECTED OUTPUT FOR knapsack_small.txt:
+✅ Canonical form showing knapsack problem structure
+✅ Items sorted by ratio: x1(6.0), x2(5.0), x3(4.0)
+✅ Branch & bound tree with include/exclude decisions
+✅ Node table iterations showing cumulative values/weights
+✅ Fathoming by bound and infeasibility
+✅ Optimal solution: x1=1, x2=1, x3=0 (Value=160, Weight=30)
+
+EXPECTED OUTPUT FOR knapsack_medium.txt:
+✅ Items sorted by ratio: x4(8.0), x3(7.5), x2(6.67), x1(5.0)
+✅ Complete branch & bound exploration
+✅ Optimal solution: x1=1, x4=1 (Value=50, Weight=7)
+
+OUTPUT FILE: All iterations and results saved to "output.txt"

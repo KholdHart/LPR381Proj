@@ -1,0 +1,9 @@
+SOLUTION RESULTS
+Algorithm: Branch & Bound Simplex
+Iterations: 5
+Status: Optimal
+Optimal Value: 106.000
+Variable Values:
+  x1 = 0.000
+  x2 = 0.000
+
